@@ -37,6 +37,34 @@ export function CoursesListScreen() {
 
   const handleAddCourse = useCallback(async () => {
     const result = await addCourses();
+
+    // User cancelled - no alert needed
+    if (result.cancelled) {
+      return;
+    }
+
+    // Error occurred
+    if (result.error) {
+      Alert.alert('Error', result.error);
+      return;
+    }
+
+    // No courses found in folder
+    if (result.noCoursesFound) {
+      Alert.alert(
+        'No Courses Found',
+        'No video courses were found in this folder. Make sure the folder contains video files (MP4, MOV, M4V).'
+      );
+      return;
+    }
+
+    // All duplicates
+    if (result.added === 0 && result.duplicates > 0) {
+      Alert.alert('Already Added', 'These courses are already in your library.');
+      return;
+    }
+
+    // Success - courses added
     if (result.added > 0) {
       Alert.alert(
         'Courses Added',
@@ -44,20 +72,25 @@ export function CoursesListScreen() {
           result.duplicates > 0 ? ` ${result.duplicates} duplicate${result.duplicates !== 1 ? 's' : ''} skipped.` : ''
         }`
       );
-    } else if (result.duplicates > 0) {
-      Alert.alert('Already Added', 'These courses are already in your library.');
     }
   }, [addCourses]);
+
+  const handleRemoveCourse = useCallback(async (courseId: string) => {
+    const result = await removeCourse(courseId);
+    if (!result.success && result.error) {
+      Alert.alert('Error', result.error);
+    }
+  }, [removeCourse]);
 
   const renderCourse = useCallback(
     ({ item }: { item: Course }) => (
       <CourseCard
         course={item}
         onPress={() => handleCoursePress(item)}
-        onRemove={removeCourse}
+        onRemove={handleRemoveCourse}
       />
     ),
-    [handleCoursePress, removeCourse]
+    [handleCoursePress, handleRemoveCourse]
   );
 
   // Welcome screen - no courses added

@@ -44,12 +44,27 @@ function coursesReducer(state: CoursesState, action: CoursesAction): CoursesStat
   }
 }
 
+// Result type for addCourses with detailed feedback
+interface AddCoursesResult {
+  added: number;
+  duplicates: number;
+  cancelled: boolean;
+  noCoursesFound: boolean;
+  error: string | null;
+}
+
+// Result type for removeCourse
+interface RemoveCourseResult {
+  success: boolean;
+  error: string | null;
+}
+
 interface CoursesContextType {
   state: CoursesState;
   scanCourses: () => Promise<void>;
   getCourse: (id: string) => Course | undefined;
-  addCourses: () => Promise<{ added: number; duplicates: number }>;
-  removeCourse: (courseId: string) => Promise<void>;
+  addCourses: () => Promise<AddCoursesResult>;
+  removeCourse: (courseId: string) => Promise<RemoveCourseResult>;
   loadStoredCourses: () => Promise<void>;
 }
 
@@ -96,16 +111,24 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
   );
 
   // Add courses - opens picker, analyzes folder, adds courses with duplicate detection
-  const addCourses = useCallback(async (): Promise<{ added: number; duplicates: number }> => {
+  const addCourses = useCallback(async (): Promise<AddCoursesResult> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const folderPath = await fileSystemService.pickFolder();
+
+      // User cancelled folder picker
       if (!folderPath) {
         dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 0 };
+        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
       }
 
       const analysis = await fileSystemService.analyzeFolder(folderPath);
+
+      // No courses found in selected folder
+      if (analysis.courses.length === 0) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
+      }
 
       // Filter out duplicates (by ID/path)
       const existingIds = new Set(state.storedCourses.map(c => c.id));
@@ -126,21 +149,29 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
 
-      return { added: newCourses.length, duplicates: duplicatesCount };
+      return { added: newCourses.length, duplicates: duplicatesCount, cancelled: false, noCoursesFound: false, error: null };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add courses';
       dispatch({
         type: 'SET_ERROR',
-        payload: error instanceof Error ? error.message : 'Failed to add courses',
+        payload: errorMessage,
       });
-      return { added: 0, duplicates: 0 };
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: false, error: errorMessage };
     }
   }, [state.storedCourses, state.courses]);
 
   // Remove a single course
-  const removeCourse = useCallback(async (courseId: string) => {
-    const filtered = state.storedCourses.filter(c => c.id !== courseId);
-    await fileSystemService.saveStoredCourses(filtered);
-    dispatch({ type: 'REMOVE_STORED_COURSE', payload: courseId });
+  const removeCourse = useCallback(async (courseId: string): Promise<RemoveCourseResult> => {
+    try {
+      const filtered = state.storedCourses.filter(c => c.id !== courseId);
+      await fileSystemService.saveStoredCourses(filtered);
+      dispatch({ type: 'REMOVE_STORED_COURSE', payload: courseId });
+      return { success: true, error: null };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to remove course';
+      return { success: false, error: errorMessage };
+    }
   }, [state.storedCourses]);
 
   return (

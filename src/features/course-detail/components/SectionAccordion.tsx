@@ -42,13 +42,14 @@ export function SectionAccordion({
         titleStyle={[styles.title, { color: theme.colors.onSurface }]}
         descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
         style={[styles.accordion, { backgroundColor: theme.colors.surface }]}
-        left={(props) => (
-          <Icon
-            {...props}
-            source="folder-outline"
-            size={24}
-            color={theme.colors.primary}
-          />
+        left={() => (
+          <View style={styles.iconContainer}>
+            <Icon
+              source="folder-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
+          </View>
         )}
         right={() => (
           <View style={styles.rightContainer}>
@@ -109,6 +110,11 @@ const styles = StyleSheet.create({
   },
   accordion: {
     paddingVertical: 4,
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 16,
   },
   title: {
     fontWeight: '600',

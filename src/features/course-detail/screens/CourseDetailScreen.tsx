@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statChip: {
-    height: 32,
+    alignItems: 'center',
   },
   progressSection: {
     marginTop: 8,
