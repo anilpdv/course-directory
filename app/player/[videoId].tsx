@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Pressable, GestureResponderEvent, LayoutChangeEvent } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Pressable, GestureResponderEvent, LayoutChangeEvent, ScrollView, StatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, IconButton, Chip, Button, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, IconButton, Chip, Button, useTheme, Surface, Icon } from 'react-native-paper';
 import { useProgress } from '../../contexts/ProgressContext';
 import { useCourses } from '../../contexts/CoursesContext';
 import { Video } from '../../types';
@@ -24,9 +24,11 @@ export default function VideoPlayerScreen() {
   }>();
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { updateVideoProgress, getVideoProgress } = useProgress();
   const { getCourse } = useCourses();
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -41,13 +43,20 @@ export default function VideoPlayerScreen() {
   const progressSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressBarRef = useRef<View>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Ref to prevent double-triggering of "Up Next" overlay
   const showNextVideoOverlayRef = useRef(false);
 
   const existingProgress = getVideoProgress(params.videoId);
-  // If video is complete, start from beginning; otherwise resume from last position
   const initialPosition = existingProgress?.isComplete ? 0 : (existingProgress?.lastPosition || 0);
+
+  // Get section videos for the list
+  const getSectionVideos = useCallback((): Video[] => {
+    const course = getCourse(params.courseId);
+    if (!course) return [];
+    const section = course.sections.find(s => s.id === params.sectionId);
+    return section?.videos || [];
+  }, [getCourse, params.courseId, params.sectionId]);
+
+  const sectionVideos = getSectionVideos();
 
   // Find next video in the section
   const getNextVideo = useCallback((): Video | null => {
@@ -67,12 +76,6 @@ export default function VideoPlayerScreen() {
 
   const nextVideo = getNextVideo();
 
-  // Debug logging
-  console.log('[DEBUG] VideoPlayerScreen rendered');
-  console.log('[DEBUG] Params:', JSON.stringify(params));
-  console.log('[DEBUG] nextVideo:', nextVideo ? nextVideo.name : 'null');
-
-  // Keep ref in sync with state to prevent double-triggering
   useEffect(() => {
     showNextVideoOverlayRef.current = showNextVideoOverlay;
   }, [showNextVideoOverlay]);
@@ -95,14 +98,12 @@ export default function VideoPlayerScreen() {
 
   useKeepAwake();
 
+  // Start in portrait mode, unlock orientation
   useEffect(() => {
-    const setupOrientation = async () => {
-      await ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.LANDSCAPE
-      );
+    const setup = async () => {
+      await ScreenOrientation.unlockAsync();
     };
-
-    setupOrientation();
+    setup();
 
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -120,20 +121,13 @@ export default function VideoPlayerScreen() {
     };
   }, [player]);
 
-  // Backup: Use playingChange with 99% threshold check (workaround for playToEnd issues)
+  // Backup: Use playingChange with 99% threshold check
   useEffect(() => {
-    console.log('[DEBUG] Setting up playingChange backup listener');
-
     const subscription = player.addListener('playingChange', ({ isPlaying }) => {
       const currentTimeVal = player.currentTime;
       const durationVal = player.duration;
 
-      console.log(`[DEBUG] playingChange: isPlaying=${isPlaying}, time=${currentTimeVal?.toFixed(1)}, duration=${durationVal?.toFixed(1)}`);
-
-      // Check if video finished (at 99% or more)
       if (!isPlaying && durationVal > 0 && currentTimeVal >= durationVal * 0.99) {
-        console.log('[DEBUG] Video finished (99% threshold reached)');
-
         const course = getCourse(params.courseId);
         if (!course) return;
         const section = course.sections.find(s => s.id === params.sectionId);
@@ -141,7 +135,6 @@ export default function VideoPlayerScreen() {
         const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
 
         if (currentIndex >= 0 && currentIndex < section.videos.length - 1 && !showNextVideoOverlayRef.current) {
-          console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (from playingChange 99%) ***');
           setShowNextVideoOverlay(true);
           setCountdown(5);
         }
@@ -149,51 +142,34 @@ export default function VideoPlayerScreen() {
     });
 
     return () => {
-      console.log('[DEBUG] Cleaning up playingChange backup listener');
       subscription.remove();
     };
   }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
 
   // Primary: Trigger "Up Next" when video reaches end
   useEffect(() => {
-    console.log('[DEBUG] Setting up playToEnd listener');
-
     const subscription = player.addListener('playToEnd', () => {
-      console.log('[DEBUG] *** playToEnd EVENT FIRED ***');
-
-      // Recalculate if there's a next video
       const course = getCourse(params.courseId);
-      if (!course) {
-        console.log('[DEBUG] playToEnd: Course NOT found!');
-        return;
-      }
+      if (!course) return;
 
       const section = course.sections.find(s => s.id === params.sectionId);
-      if (!section) {
-        console.log('[DEBUG] playToEnd: Section NOT found!');
-        return;
-      }
+      if (!section) return;
 
       const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
-      console.log(`[DEBUG] playToEnd: currentIndex=${currentIndex}, totalVideos=${section.videos.length}`);
 
       if (currentIndex >= 0 && currentIndex < section.videos.length - 1 && !showNextVideoOverlayRef.current) {
-        console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (from playToEnd) ***');
         setShowNextVideoOverlay(true);
         setCountdown(5);
       }
     });
 
     return () => {
-      console.log('[DEBUG] Cleaning up playToEnd listener');
       subscription.remove();
     };
   }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
 
   // Track time and trigger "Up Next" when 5 seconds remaining
   useEffect(() => {
-    console.log('[DEBUG] Setting up time tracking interval');
-
     const interval = setInterval(() => {
       const currentTimeVal = player.currentTime;
       const durationVal = player.duration;
@@ -206,32 +182,14 @@ export default function VideoPlayerScreen() {
 
         const timeRemaining = durationVal - currentTimeVal;
 
-        // Debug: Log time info when close to end
-        if (timeRemaining <= 10 && timeRemaining > 0) {
-          console.log(`[DEBUG] Time remaining: ${timeRemaining.toFixed(1)}s, Duration: ${durationVal.toFixed(1)}s`);
-        }
-
-        // Recalculate if there's a next video
         const course = getCourse(params.courseId);
-        if (!course) {
-          console.log('[DEBUG] Course NOT found! courseId:', params.courseId);
-          return;
-        }
+        if (!course) return;
         const section = course.sections.find(s => s.id === params.sectionId);
-        if (!section) {
-          console.log('[DEBUG] Section NOT found! sectionId:', params.sectionId);
-          return;
-        }
+        if (!section) return;
         const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
         const hasNextVideo = currentIndex >= 0 && currentIndex < section.videos.length - 1;
 
-        if (timeRemaining <= 10 && timeRemaining > 0) {
-          console.log(`[DEBUG] Current index: ${currentIndex}, Total videos: ${section.videos.length}, Has next: ${hasNextVideo}`);
-        }
-
-        // Show "Up Next" button when 5 seconds or less remaining
         if (timeRemaining <= 5 && timeRemaining > 0 && hasNextVideo && !showNextVideoOverlayRef.current) {
-          console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (time-based) ***');
           setShowNextVideoOverlay(true);
           setCountdown(Math.ceil(timeRemaining));
         }
@@ -239,7 +197,6 @@ export default function VideoPlayerScreen() {
     }, 250);
 
     return () => {
-      console.log('[DEBUG] Cleaning up time tracking interval');
       clearInterval(interval);
     };
   }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
@@ -265,7 +222,6 @@ export default function VideoPlayerScreen() {
       }
     };
   }, [params.videoId, currentTime, duration, updateVideoProgress]);
-
 
   // Countdown timer for auto-play
   useEffect(() => {
@@ -297,17 +253,14 @@ export default function VideoPlayerScreen() {
   const playNextVideo = useCallback(() => {
     if (!nextVideo) return;
 
-    // Save progress for current video
     if (duration > 0) {
       updateVideoProgress(params.videoId, duration, duration);
     }
 
-    // Clear countdown interval
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
     }
 
-    // Navigate to next video
     router.replace({
       pathname: '/player/[videoId]',
       params: {
@@ -403,6 +356,36 @@ export default function VideoPlayerScreen() {
     router.back();
   };
 
+  const toggleFullscreen = async () => {
+    if (isFullscreen) {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      setIsFullscreen(false);
+    } else {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      setIsFullscreen(true);
+    }
+    resetHideControlsTimeout();
+  };
+
+  const handleVideoSelect = (video: Video) => {
+    if (video.id === params.videoId) return;
+
+    if (duration > 0 && currentTime > 0) {
+      updateVideoProgress(params.videoId, currentTime, duration);
+    }
+
+    router.replace({
+      pathname: '/player/[videoId]',
+      params: {
+        videoId: video.id,
+        videoPath: video.filePath,
+        videoName: video.name,
+        courseId: params.courseId,
+        sectionId: params.sectionId,
+      },
+    });
+  };
+
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -416,166 +399,562 @@ export default function VideoPlayerScreen() {
 
   const progressPercent = duration > 0 ? currentTime / duration : 0;
 
-  return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.playerContainer}
-        activeOpacity={1}
-        onPress={resetHideControlsTimeout}
-      >
-        <VideoView
-          player={player}
-          style={styles.video}
-          contentFit="contain"
-          nativeControls={false}
-          allowsPictureInPicture={false}
-        />
-      </TouchableOpacity>
+  // Fullscreen (Landscape) Layout
+  if (isFullscreen) {
+    return (
+      <View style={styles.fullscreenContainer}>
+        <StatusBar hidden />
+        <TouchableOpacity
+          style={styles.playerContainer}
+          activeOpacity={1}
+          onPress={resetHideControlsTimeout}
+        >
+          <VideoView
+            player={player}
+            style={styles.fullscreenVideo}
+            contentFit="contain"
+            nativeControls={false}
+            allowsPictureInPicture={false}
+          />
+        </TouchableOpacity>
 
-      {isControlsVisible && (
-        <View style={styles.controlsOverlay}>
-          {/* Top Bar */}
-          <SafeAreaView edges={['top']} style={styles.topBar}>
-            <IconButton
-              icon="close"
-              iconColor="#FFFFFF"
-              size={24}
-              onPress={handleClose}
-              style={styles.closeButton}
-            />
-            <Text
-              variant="titleMedium"
-              style={styles.videoTitle}
-              numberOfLines={1}
-            >
-              {params.videoName}
-            </Text>
-            <Chip
-              mode="flat"
-              compact
-              onPress={handlePlaybackRateChange}
-              style={styles.speedChip}
-              textStyle={styles.speedChipText}
-            >
-              {PLAYBACK_RATES[playbackRateIndex]}x
-            </Chip>
-          </SafeAreaView>
-
-          {/* Center Controls */}
-          <View style={styles.centerControls}>
-            <Pressable
-              style={styles.seekButton}
-              onPress={() => handleSeek(-10)}
-            >
+        {isControlsVisible && (
+          <View style={styles.controlsOverlay}>
+            {/* Top Bar */}
+            <View style={[styles.topBar, { paddingLeft: insets.left + 16, paddingRight: insets.right + 16 }]}>
               <IconButton
-                icon="rewind-10"
+                icon="close"
                 iconColor="#FFFFFF"
-                size={32}
+                size={24}
+                onPress={handleClose}
+                style={styles.controlButton}
               />
-            </Pressable>
+              <Text
+                variant="titleMedium"
+                style={styles.videoTitle}
+                numberOfLines={1}
+              >
+                {params.videoName}
+              </Text>
+              <View style={styles.topBarRight}>
+                <Chip
+                  mode="flat"
+                  compact
+                  onPress={handlePlaybackRateChange}
+                  style={styles.speedChip}
+                  textStyle={styles.speedChipText}
+                >
+                  {PLAYBACK_RATES[playbackRateIndex]}x
+                </Chip>
+                <IconButton
+                  icon="fullscreen-exit"
+                  iconColor="#FFFFFF"
+                  size={24}
+                  onPress={toggleFullscreen}
+                  style={styles.controlButton}
+                />
+              </View>
+            </View>
 
-            <IconButton
-              icon={isPlaying ? 'pause' : 'play'}
-              iconColor="#FFFFFF"
-              size={48}
-              onPress={handlePlayPause}
-              style={[styles.playPauseButton, { backgroundColor: theme.colors.primary }]}
-            />
+            {/* Center Controls */}
+            <View style={styles.centerControls}>
+              <Pressable
+                style={styles.seekButton}
+                onPress={() => handleSeek(-10)}
+              >
+                <IconButton
+                  icon="rewind-10"
+                  iconColor="#FFFFFF"
+                  size={32}
+                />
+              </Pressable>
 
-            <Pressable
-              style={styles.seekButton}
-              onPress={() => handleSeek(10)}
-            >
               <IconButton
-                icon="fast-forward-10"
+                icon={isPlaying ? 'pause' : 'play'}
                 iconColor="#FFFFFF"
-                size={32}
+                size={48}
+                onPress={handlePlayPause}
+                style={[styles.playPauseButton, { backgroundColor: theme.colors.primary }]}
               />
-            </Pressable>
-          </View>
 
-          {/* Bottom Bar */}
-          <SafeAreaView edges={['bottom']} style={styles.bottomBar}>
-            <Pressable
-              style={styles.progressTouchArea}
-              onLayout={handleProgressBarLayout}
-              onPress={handleProgressBarSeek}
-              onPressIn={() => setIsSeeking(true)}
-              onPressOut={() => setIsSeeking(false)}
-              onMoveShouldSetResponder={() => true}
-              onResponderMove={handleProgressBarMove}
-              onResponderRelease={() => setIsSeeking(false)}
-            >
-              <View style={styles.progressBarContainer}>
-                <View style={styles.progressBarTrack}>
+              <Pressable
+                style={styles.seekButton}
+                onPress={() => handleSeek(10)}
+              >
+                <IconButton
+                  icon="fast-forward-10"
+                  iconColor="#FFFFFF"
+                  size={32}
+                />
+              </Pressable>
+            </View>
+
+            {/* Bottom Bar */}
+            <View style={[styles.bottomBar, { paddingLeft: insets.left + 24, paddingRight: insets.right + 24 }]}>
+              <Pressable
+                style={styles.progressTouchArea}
+                onLayout={handleProgressBarLayout}
+                onPress={handleProgressBarSeek}
+                onPressIn={() => setIsSeeking(true)}
+                onPressOut={() => setIsSeeking(false)}
+                onMoveShouldSetResponder={() => true}
+                onResponderMove={handleProgressBarMove}
+                onResponderRelease={() => setIsSeeking(false)}
+              >
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBarTrack}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${progressPercent * 100}%`,
+                          backgroundColor: theme.colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
                   <View
                     style={[
-                      styles.progressBarFill,
+                      styles.progressThumb,
                       {
-                        width: `${progressPercent * 100}%`,
+                        left: `${progressPercent * 100}%`,
                         backgroundColor: theme.colors.primary,
                       },
                     ]}
                   />
                 </View>
-                {/* Thumb indicator */}
-                <View
-                  style={[
-                    styles.progressThumb,
-                    {
-                      left: `${progressPercent * 100}%`,
-                      backgroundColor: theme.colors.primary,
-                    },
-                  ]}
+              </Pressable>
+
+              <View style={styles.timeContainer}>
+                <Text variant="labelMedium" style={styles.timeText}>
+                  {formatTime(currentTime)}
+                </Text>
+                <Text variant="labelMedium" style={styles.timeText}>
+                  {formatTime(duration)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Up Next Button */}
+        {showNextVideoOverlay && nextVideo && (
+          <View style={[styles.nextVideoButton, { right: insets.right + 24 }]}>
+            <Button
+              mode="contained"
+              onPress={playNextVideo}
+              icon="skip-next"
+              contentStyle={styles.nextButtonContent}
+            >
+              Next ({countdown}s)
+            </Button>
+            <IconButton
+              icon="close"
+              size={20}
+              iconColor="#FFFFFF"
+              onPress={cancelAutoPlay}
+              style={styles.cancelIconButton}
+            />
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // Portrait Layout
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Video Container at Top */}
+      <View style={[styles.portraitVideoContainer, { marginTop: insets.top }]}>
+        <TouchableOpacity
+          style={styles.videoTouchable}
+          activeOpacity={1}
+          onPress={resetHideControlsTimeout}
+        >
+          <VideoView
+            player={player}
+            style={styles.portraitVideo}
+            contentFit="contain"
+            nativeControls={false}
+            allowsPictureInPicture={false}
+          />
+        </TouchableOpacity>
+
+        {/* Portrait Controls Overlay */}
+        {isControlsVisible && (
+          <View style={styles.portraitControlsOverlay}>
+            {/* Top Bar */}
+            <View style={styles.portraitTopBar}>
+              <IconButton
+                icon="close"
+                iconColor="#FFFFFF"
+                size={24}
+                onPress={handleClose}
+                style={styles.controlButton}
+              />
+              <View style={styles.portraitTopBarRight}>
+                <Chip
+                  mode="flat"
+                  compact
+                  onPress={handlePlaybackRateChange}
+                  style={styles.speedChip}
+                  textStyle={styles.speedChipText}
+                >
+                  {PLAYBACK_RATES[playbackRateIndex]}x
+                </Chip>
+                <IconButton
+                  icon="fullscreen"
+                  iconColor="#FFFFFF"
+                  size={24}
+                  onPress={toggleFullscreen}
+                  style={styles.controlButton}
                 />
               </View>
-            </Pressable>
-
-            <View style={styles.timeContainer}>
-              <Text variant="labelMedium" style={styles.timeText}>
-                {formatTime(currentTime)}
-              </Text>
-              <Text variant="labelMedium" style={styles.timeText}>
-                {formatTime(duration)}
-              </Text>
             </View>
-          </SafeAreaView>
-        </View>
-      )}
 
-      {/* Up Next Button */}
-      {showNextVideoOverlay && nextVideo && (
-        <View style={styles.nextVideoButton}>
-          <Button
-            mode="contained"
-            onPress={playNextVideo}
-            icon="skip-next"
-            contentStyle={styles.nextButtonContent}
-          >
-            Next ({countdown}s)
-          </Button>
-          <IconButton
-            icon="close"
-            size={20}
-            iconColor="#FFFFFF"
-            onPress={cancelAutoPlay}
-            style={styles.cancelIconButton}
-          />
-        </View>
-      )}
+            {/* Center Controls */}
+            <View style={styles.portraitCenterControls}>
+              <Pressable
+                style={styles.portraitSeekButton}
+                onPress={() => handleSeek(-10)}
+              >
+                <IconButton
+                  icon="rewind-10"
+                  iconColor="#FFFFFF"
+                  size={28}
+                />
+              </Pressable>
+
+              <IconButton
+                icon={isPlaying ? 'pause' : 'play'}
+                iconColor="#FFFFFF"
+                size={40}
+                onPress={handlePlayPause}
+                style={[styles.portraitPlayPauseButton, { backgroundColor: theme.colors.primary }]}
+              />
+
+              <Pressable
+                style={styles.portraitSeekButton}
+                onPress={() => handleSeek(10)}
+              >
+                <IconButton
+                  icon="fast-forward-10"
+                  iconColor="#FFFFFF"
+                  size={28}
+                />
+              </Pressable>
+            </View>
+
+            {/* Bottom Bar */}
+            <View style={styles.portraitBottomBar}>
+              <Pressable
+                style={styles.progressTouchArea}
+                onLayout={handleProgressBarLayout}
+                onPress={handleProgressBarSeek}
+                onPressIn={() => setIsSeeking(true)}
+                onPressOut={() => setIsSeeking(false)}
+                onMoveShouldSetResponder={() => true}
+                onResponderMove={handleProgressBarMove}
+                onResponderRelease={() => setIsSeeking(false)}
+              >
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBarTrack}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${progressPercent * 100}%`,
+                          backgroundColor: theme.colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <View
+                    style={[
+                      styles.progressThumb,
+                      {
+                        left: `${progressPercent * 100}%`,
+                        backgroundColor: theme.colors.primary,
+                      },
+                    ]}
+                  />
+                </View>
+              </Pressable>
+
+              <View style={styles.timeContainer}>
+                <Text variant="labelSmall" style={styles.timeText}>
+                  {formatTime(currentTime)}
+                </Text>
+                <Text variant="labelSmall" style={styles.timeText}>
+                  {formatTime(duration)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Up Next Button (Portrait) */}
+        {showNextVideoOverlay && nextVideo && (
+          <View style={styles.portraitNextVideoButton}>
+            <Button
+              mode="contained"
+              onPress={playNextVideo}
+              icon="skip-next"
+              compact
+            >
+              Next ({countdown}s)
+            </Button>
+            <IconButton
+              icon="close"
+              size={18}
+              iconColor="#FFFFFF"
+              onPress={cancelAutoPlay}
+              style={styles.cancelIconButton}
+            />
+          </View>
+        )}
+      </View>
+
+      {/* Video Info & List Below */}
+      <View style={[styles.videoListContainer, { backgroundColor: theme.colors.background }]}>
+        {/* Current Video Info */}
+        <Surface style={[styles.currentVideoInfo, { backgroundColor: theme.colors.surface }]} elevation={1}>
+          <Text variant="titleMedium" style={{ color: theme.colors.onSurface }} numberOfLines={2}>
+            {params.videoName}
+          </Text>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+            {sectionVideos.findIndex(v => v.id === params.videoId) + 1} of {sectionVideos.length} videos
+          </Text>
+        </Surface>
+
+        {/* Video List */}
+        <ScrollView
+          style={styles.videoList}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+        >
+          <Text variant="titleSmall" style={[styles.sectionHeader, { color: theme.colors.onSurfaceVariant }]}>
+            Up Next
+          </Text>
+          {sectionVideos.map((video, index) => {
+            const videoProgress = getVideoProgress(video.id);
+            const isCurrentVideo = video.id === params.videoId;
+            const isComplete = videoProgress?.isComplete || false;
+
+            return (
+              <Pressable
+                key={video.id}
+                onPress={() => handleVideoSelect(video)}
+                style={[
+                  styles.videoListItem,
+                  { backgroundColor: isCurrentVideo ? theme.colors.primaryContainer : theme.colors.surface },
+                ]}
+              >
+                <View style={styles.videoListItemLeft}>
+                  {isComplete ? (
+                    <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
+                      <Icon source="check" size={14} color={theme.colors.onPrimary} />
+                    </View>
+                  ) : isCurrentVideo ? (
+                    <View style={[styles.playingIndicator, { backgroundColor: theme.colors.primary }]}>
+                      <Icon source="play" size={14} color={theme.colors.onPrimary} />
+                    </View>
+                  ) : (
+                    <Text variant="bodySmall" style={[styles.videoNumber, { color: theme.colors.onSurfaceVariant }]}>
+                      {index + 1}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.videoListItemContent}>
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      color: isCurrentVideo ? theme.colors.onPrimaryContainer : theme.colors.onSurface,
+                      fontWeight: isCurrentVideo ? '600' : '400',
+                    }}
+                    numberOfLines={2}
+                  >
+                    {video.name}
+                  </Text>
+                  {videoProgress && !isComplete && videoProgress.lastPosition > 0 && (
+                    <View style={styles.videoProgressContainer}>
+                      <View style={[styles.videoProgressBar, { backgroundColor: theme.colors.surfaceVariant }]}>
+                        <View
+                          style={[
+                            styles.videoProgressFill,
+                            {
+                              width: `${videoProgress.percentComplete}%`,
+                              backgroundColor: theme.colors.primary,
+                            }
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </View>
+                {!isCurrentVideo && (
+                  <IconButton
+                    icon="play-circle-outline"
+                    size={24}
+                    iconColor={theme.colors.primary}
+                    onPress={() => handleVideoSelect(video)}
+                  />
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Main Container
   container: {
+    flex: 1,
+  },
+
+  // Portrait Video Container
+  portraitVideoContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000',
+    position: 'relative',
+  },
+  videoTouchable: {
+    flex: 1,
+  },
+  portraitVideo: {
+    flex: 1,
+  },
+
+  // Portrait Controls
+  portraitControlsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'space-between',
+  },
+  portraitTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+  },
+  portraitTopBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  portraitCenterControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+  },
+  portraitSeekButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  portraitPlayPauseButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  portraitBottomBar: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  portraitNextVideoButton: {
+    position: 'absolute',
+    bottom: 50,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  // Video List
+  videoListContainer: {
+    flex: 1,
+  },
+  currentVideoInfo: {
+    padding: 16,
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 12,
+  },
+  videoList: {
+    flex: 1,
+    marginTop: 8,
+  },
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    fontWeight: '600',
+  },
+  videoListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginVertical: 4,
+    borderRadius: 12,
+  },
+  videoListItemLeft: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoNumber: {
+    fontWeight: '500',
+  },
+  completeBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playingIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoListItemContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  videoProgressContainer: {
+    marginTop: 6,
+  },
+  videoProgressBar: {
+    height: 3,
+    borderRadius: 1.5,
+    width: '60%',
+  },
+  videoProgressFill: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+
+  // Fullscreen Mode
+  fullscreenContainer: {
     flex: 1,
     backgroundColor: '#000',
   },
   playerContainer: {
     flex: 1,
   },
-  video: {
+  fullscreenVideo: {
     flex: 1,
     width: '100%',
     height: '100%',
@@ -589,10 +968,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 16,
   },
-  closeButton: {
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  controlButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   videoTitle: {
@@ -630,7 +1012,6 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   bottomBar: {
-    paddingHorizontal: 24,
     paddingBottom: 16,
   },
   progressTouchArea: {
@@ -669,7 +1050,6 @@ const styles = StyleSheet.create({
   nextVideoButton: {
     position: 'absolute',
     bottom: 100,
-    right: 24,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
