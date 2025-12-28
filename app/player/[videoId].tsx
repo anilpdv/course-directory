@@ -110,6 +110,32 @@ export default function VideoPlayerScreen() {
     };
   }, []);
 
+  // Listen to device orientation changes and update fullscreen state
+  useEffect(() => {
+    const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+      const orientation = event.orientationInfo.orientation;
+
+      // Landscape orientations -> fullscreen
+      if (
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      ) {
+        setIsFullscreen(true);
+      }
+      // Portrait orientations -> portrait mode with list
+      else if (
+        orientation === ScreenOrientation.Orientation.PORTRAIT_UP ||
+        orientation === ScreenOrientation.Orientation.PORTRAIT_DOWN
+      ) {
+        setIsFullscreen(false);
+      }
+    });
+
+    return () => {
+      ScreenOrientation.removeOrientationChangeListener(subscription);
+    };
+  }, []);
+
   // Track isPlaying state
   useEffect(() => {
     const subscription = player.addListener('playingChange', (event) => {
