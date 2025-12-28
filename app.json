@@ -19,7 +19,9 @@
       "infoPlist": {
         "UIFileSharingEnabled": true,
         "LSSupportsOpeningDocumentsInPlace": true,
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -27,7 +29,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#121212"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.courseviewer.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -35,7 +38,12 @@
     },
     "plugins": [
       "expo-router",
-      ["expo-video", { "supportsBackgroundPlayback": true }],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true
+        }
+      ],
       [
         "expo-screen-orientation",
         {

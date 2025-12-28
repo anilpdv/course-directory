@@ -82,6 +82,7 @@ export default function VideoPlayerScreen() {
     player.playbackRate = PLAYBACK_RATES[playbackRateIndex];
     player.staysActiveInBackground = true;
     player.showNowPlayingNotification = true;
+    player.audioMixingMode = 'doNotMix';
 
     if (initialPosition > 0) {
       setTimeout(() => {
@@ -427,6 +428,7 @@ export default function VideoPlayerScreen() {
           style={styles.video}
           contentFit="contain"
           nativeControls={false}
+          allowsPictureInPicture={false}
         />
       </TouchableOpacity>
 
