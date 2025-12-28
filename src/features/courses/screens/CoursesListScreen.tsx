@@ -127,33 +127,6 @@ export function CoursesListScreen() {
           >
             Add Course
           </Button>
-
-          <Text
-            variant="bodySmall"
-            style={[styles.hintText, { color: theme.colors.onSurfaceVariant }]}
-          >
-            Select a course folder or a folder{'\n'}
-            containing multiple courses.
-          </Text>
-
-          <Surface style={[styles.structureExample, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <Text
-              variant="labelMedium"
-              style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}
-            >
-              Expected structure:
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={[styles.structureCode, { color: theme.colors.onSurface }]}
-            >
-              Course Folder/{'\n'}
-              ├── 01 - Section/{'\n'}
-              │   └── video.mp4{'\n'}
-              └── 02 - Section/{'\n'}
-                  └── video.mp4
-            </Text>
-          </Surface>
         </View>
       </SafeAreaView>
     );

@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
     marginLeft: 16,
   },
   title: {

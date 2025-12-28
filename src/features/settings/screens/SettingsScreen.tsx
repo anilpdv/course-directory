@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
     marginLeft: 8,
   },
   versionBadge: {
