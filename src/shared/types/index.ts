@@ -90,3 +90,34 @@ export type ProgressAction =
   | { type: 'LOAD_PROGRESS'; payload: ProgressData }
   | { type: 'UPDATE_VIDEO_PROGRESS'; payload: VideoProgress }
   | { type: 'CLEAR_PROGRESS' };
+
+// Tag definition
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: number;
+}
+
+// Tags state for context
+export interface TagsState {
+  tags: Tag[];
+  courseTags: Record<string, string[]>; // courseId -> tagId[]
+  isLoaded: boolean;
+}
+
+// Tags actions
+export type TagsAction =
+  | { type: 'LOAD_TAGS'; payload: { tags: Tag[]; courseTags: Record<string, string[]> } }
+  | { type: 'ADD_TAG'; payload: Tag }
+  | { type: 'UPDATE_TAG'; payload: Tag }
+  | { type: 'DELETE_TAG'; payload: string }
+  | { type: 'ASSIGN_TAG'; payload: { courseId: string; tagId: string } }
+  | { type: 'UNASSIGN_TAG'; payload: { courseId: string; tagId: string } }
+  | { type: 'SET_COURSE_TAGS'; payload: { courseId: string; tagIds: string[] } };
+
+// Filter state
+export interface TagFilter {
+  selectedTagIds: string[];
+  filterMode: 'any' | 'all';
+}

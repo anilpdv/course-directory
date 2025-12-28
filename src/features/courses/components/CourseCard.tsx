@@ -1,8 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Card, Text, ProgressBar, Chip, Icon, useTheme } from 'react-native-paper';
 import { Course } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
+import { useTags } from '@shared/contexts/TagsContext';
+import { TagChip, TagSelector } from '@features/tags';
 
 interface CourseCardProps {
   course: Course;
@@ -13,31 +15,42 @@ interface CourseCardProps {
 export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
   const theme = useTheme();
   const { getCourseProgress } = useProgress();
+  const { getTagsForCourse } = useTags();
+  const [tagSelectorVisible, setTagSelectorVisible] = useState(false);
+
   const progress = getCourseProgress(course);
   const isComplete = progress.percent >= 100;
+  const courseTags = getTagsForCourse(course.id);
 
   const handleLongPress = useCallback(() => {
-    if (onRemove) {
-      Alert.alert(
-        'Remove Course',
-        `Remove "${course.name}" from your library? This won't delete the video files.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove',
-            style: 'destructive',
-            onPress: () => onRemove(course.id),
-          },
-        ]
-      );
-    }
+    Alert.alert(
+      course.name,
+      'What would you like to do?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Manage Tags',
+          onPress: () => setTagSelectorVisible(true),
+        },
+        ...(onRemove
+          ? [
+              {
+                text: 'Remove Course',
+                style: 'destructive' as const,
+                onPress: () => onRemove(course.id),
+              },
+            ]
+          : []),
+      ]
+    );
   }, [course, onRemove]);
 
   return (
+    <>
     <Card
       style={[styles.card, { backgroundColor: theme.colors.surface }]}
       onPress={onPress}
-      onLongPress={onRemove ? handleLongPress : undefined}
+      onLongPress={handleLongPress}
       mode="elevated"
     >
       <Card.Content style={styles.content}>
@@ -74,6 +87,21 @@ export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
                 {course.totalVideos} video{course.totalVideos !== 1 ? 's' : ''}
               </Text>
             </View>
+            {courseTags.length > 0 && (
+              <View style={styles.tagsRow}>
+                {courseTags.slice(0, 3).map((tag) => (
+                  <TagChip key={tag.id} tag={tag} size="small" />
+                ))}
+                {courseTags.length > 3 && (
+                  <Text
+                    variant="labelSmall"
+                    style={{ color: theme.colors.onSurfaceVariant }}
+                  >
+                    +{courseTags.length - 3}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
           {isComplete && (
             <Chip
@@ -106,6 +134,14 @@ export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
         <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
       </Card.Actions>
     </Card>
+
+    <TagSelector
+      courseId={course.id}
+      courseName={course.name}
+      visible={tagSelectorVisible}
+      onDismiss={() => setTagSelectorVisible(false)}
+    />
+    </>
   );
 }
 
@@ -140,6 +176,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   dot: {
     marginHorizontal: 6,
@@ -149,6 +186,13 @@ const styles = StyleSheet.create({
   },
   completeText: {
     fontSize: 11,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
   },
   progressSection: {
     marginTop: 16,

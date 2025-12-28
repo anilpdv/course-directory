@@ -13,16 +13,21 @@ import {
 } from 'react-native-paper';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
+import { useTags } from '@shared/contexts/TagsContext';
+import { TagList } from '@features/tags';
 
 export function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { state, addCourses, scanCourses } = useCourses();
   const { clearAllProgress, state: progressState } = useProgress();
+  const { state: tagsState } = useTags();
   const [isClearing, setIsClearing] = useState(false);
+  const [tagListVisible, setTagListVisible] = useState(false);
 
   const { courses } = state;
   const progressCount = Object.keys(progressState.data.videos).length;
+  const tagCount = tagsState.tags.length;
 
   const handleAddCourse = async () => {
     const result = await addCourses();
@@ -123,6 +128,28 @@ export function SettingsScreen() {
           </Surface>
         </View>
 
+        {/* Tags Section */}
+        <View style={styles.section}>
+          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+            Tags
+          </Text>
+          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <List.Item
+              title="Manage Tags"
+              description={`${tagCount} tag${tagCount !== 1 ? 's' : ''} created`}
+              left={() => (
+                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                  <Icon source="tag-multiple" size={22} color={theme.colors.primary} />
+                </View>
+              )}
+              right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
+              onPress={() => setTagListVisible(true)}
+              titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
+              descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+            />
+          </Surface>
+        </View>
+
         {/* Data Management Section */}
         <View style={styles.section}>
           <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
@@ -207,6 +234,11 @@ export function SettingsScreen() {
           </Surface>
         </View>
       </ScrollView>
+
+      <TagList
+        visible={tagListVisible}
+        onDismiss={() => setTagListVisible(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ProgressData, AppSettings } from '../types';
+import { ProgressData, AppSettings, Tag } from '../types';
 
 const KEYS = {
   PROGRESS: '@courseviewer/progress',
   SETTINGS: '@courseviewer/settings',
   LAST_PLAYED: '@courseviewer/last_played',
+  TAGS: '@courseviewer/tags',
+  COURSE_TAGS: '@courseviewer/course_tags',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -80,6 +82,43 @@ class StorageService {
       await AsyncStorage.multiRemove([KEYS.PROGRESS, KEYS.SETTINGS, KEYS.LAST_PLAYED]);
     } catch (error) {
       console.error('Failed to clear storage:', error);
+    }
+  }
+
+  // Tag storage methods
+  async getTags(): Promise<Tag[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.TAGS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Failed to load tags:', error);
+      return [];
+    }
+  }
+
+  async saveTags(tags: Tag[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.TAGS, JSON.stringify(tags));
+    } catch (error) {
+      console.error('Failed to save tags:', error);
+    }
+  }
+
+  async getCourseTags(): Promise<Record<string, string[]>> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.COURSE_TAGS);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      console.error('Failed to load course tags:', error);
+      return {};
+    }
+  }
+
+  async saveCourseTags(courseTags: Record<string, string[]>): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.COURSE_TAGS, JSON.stringify(courseTags));
+    } catch (error) {
+      console.error('Failed to save course tags:', error);
     }
   }
 }

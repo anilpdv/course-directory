@@ -44,3 +44,19 @@ export const colors = {
 };
 
 export type ThemeColors = typeof colors;
+
+// Tag color palette for user-created tags
+export const tagColors = [
+  '#BB86FC', // Purple (primary)
+  '#03DAC6', // Teal (secondary)
+  '#CF6679', // Pink/Error
+  '#4CAF50', // Green
+  '#FF9800', // Orange
+  '#2196F3', // Blue
+  '#9C27B0', // Deep Purple
+  '#00BCD4', // Cyan
+  '#FFEB3B', // Yellow
+  '#E91E63', // Pink
+] as const;
+
+export type TagColor = (typeof tagColors)[number];

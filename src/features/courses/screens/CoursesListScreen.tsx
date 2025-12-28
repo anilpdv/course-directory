@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,17 +10,36 @@ import {
   Icon,
   useTheme,
   FAB,
+  IconButton,
+  Badge,
 } from 'react-native-paper';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { Course } from '@shared/types';
 import { CourseCard } from '../components/CourseCard';
 import { EmptyCoursesView } from '../components/EmptyCoursesView';
+import { TagFilterDrawer, useTagFilter } from '@features/tags';
 
 export function CoursesListScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { state, scanCourses, addCourses, removeCourse } = useCourses();
   const { courses, isLoading, error, hasCourses } = state;
+  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+
+  const {
+    selectedTagIds,
+    filterMode,
+    toggleTag,
+    setFilterMode,
+    clearFilters,
+    filterCourses,
+    hasActiveFilters,
+    matchingCount,
+  } = useTagFilter();
+
+  const filteredCourses = useMemo(() => {
+    return filterCourses(courses);
+  }, [courses, filterCourses]);
 
   useEffect(() => {
     if (hasCourses) {
@@ -158,8 +177,26 @@ export function CoursesListScreen() {
   const renderHeader = () => (
     <View style={styles.header}>
       <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-        {courses.length} course{courses.length !== 1 ? 's' : ''} in your library
+        {hasActiveFilters
+          ? `${filteredCourses.length} of ${courses.length} courses`
+          : `${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
       </Text>
+      <View style={styles.filterButtonContainer}>
+        <IconButton
+          icon="filter-variant"
+          size={24}
+          onPress={() => setFilterDrawerVisible(true)}
+          iconColor={hasActiveFilters ? theme.colors.primary : theme.colors.onSurfaceVariant}
+        />
+        {hasActiveFilters && (
+          <Badge
+            size={16}
+            style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}
+          >
+            {selectedTagIds.length}
+          </Badge>
+        )}
+      </View>
     </View>
   );
 
@@ -182,16 +219,35 @@ export function CoursesListScreen() {
       ) : (
         <>
           <FlatList
-            data={courses}
+            data={filteredCourses}
             keyExtractor={(item) => item.id}
             renderItem={renderCourse}
             ListHeaderComponent={courses.length > 0 ? renderHeader : null}
             ListEmptyComponent={
-              <EmptyCoursesView onRescan={scanCourses} onAddCourse={handleAddCourse} />
+              hasActiveFilters ? (
+                <View style={styles.noResultsContainer}>
+                  <Icon source="filter-off" size={48} color={theme.colors.onSurfaceVariant} />
+                  <Text
+                    variant="bodyLarge"
+                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}
+                  >
+                    No courses match your filters
+                  </Text>
+                  <Button
+                    mode="outlined"
+                    onPress={clearFilters}
+                    style={{ marginTop: 16 }}
+                  >
+                    Clear Filters
+                  </Button>
+                </View>
+              ) : (
+                <EmptyCoursesView onRescan={scanCourses} onAddCourse={handleAddCourse} />
+              )
             }
             contentContainerStyle={[
               styles.listContent,
-              courses.length === 0 && styles.listContentEmpty,
+              filteredCourses.length === 0 && styles.listContentEmpty,
             ]}
             refreshControl={
               <RefreshControl
@@ -211,6 +267,14 @@ export function CoursesListScreen() {
               color={theme.colors.onPrimary}
             />
           )}
+
+          <TagFilterDrawer
+            visible={filterDrawerVisible}
+            onDismiss={() => setFilterDrawerVisible(false)}
+            selectedTagIds={selectedTagIds}
+            onToggleTag={toggleTag}
+            onClearFilters={clearFilters}
+          />
         </>
       )}
     </SafeAreaView>
@@ -276,7 +340,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
+  },
+  filterButtonContainer: {
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
   listContent: {
     paddingTop: 8,
