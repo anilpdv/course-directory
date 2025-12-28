@@ -100,10 +100,12 @@ class FileSystemService {
       }
 
       // First, check if selected folder itself contains videos directly
+      const courseId = this.generateId(coursesDir.uri);
+      const mainSectionId = this.generateId(`${coursesDir.uri}/main`);
       const directVideos = await this.scanVideosInFolder(
         coursesDir,
-        this.generateId(coursesDir.uri),
-        this.generateId(coursesDir.uri)
+        mainSectionId,  // Use the same ID that the section will have
+        courseId
       );
 
       if (directVideos.length > 0) {
@@ -190,18 +192,20 @@ class FileSystemService {
 
     // Also check for videos directly in course folder (flat structure)
     if (sections.length === 0) {
+      const flatCourseId = this.generateId(courseDir.uri);
+      const flatSectionId = this.generateId(`${courseDir.uri}/main`);
       const directVideos = await this.scanVideosInFolder(
         courseDir,
-        this.generateId(courseDir.uri),
-        this.generateId(courseDir.uri)
+        flatSectionId,  // Use the same ID that the section will have
+        flatCourseId
       );
       if (directVideos.length > 0) {
         sections.push({
-          id: this.generateId(`${courseDir.uri}/main`),
+          id: flatSectionId,
           name: 'Videos',
           folderPath: courseDir.uri,
           order: 0,
-          courseId: this.generateId(courseDir.uri),
+          courseId: flatCourseId,
           videos: directVideos,
         });
         totalVideos = directVideos.length;

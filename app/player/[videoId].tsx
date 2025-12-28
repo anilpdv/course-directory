@@ -42,8 +42,12 @@ export default function VideoPlayerScreen() {
   const progressBarRef = useRef<View>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Ref to prevent double-triggering of "Up Next" overlay
+  const showNextVideoOverlayRef = useRef(false);
+
   const existingProgress = getVideoProgress(params.videoId);
-  const initialPosition = existingProgress?.lastPosition || 0;
+  // If video is complete, start from beginning; otherwise resume from last position
+  const initialPosition = existingProgress?.isComplete ? 0 : (existingProgress?.lastPosition || 0);
 
   // Find next video in the section
   const getNextVideo = useCallback((): Video | null => {
@@ -63,9 +67,21 @@ export default function VideoPlayerScreen() {
 
   const nextVideo = getNextVideo();
 
+  // Debug logging
+  console.log('[DEBUG] VideoPlayerScreen rendered');
+  console.log('[DEBUG] Params:', JSON.stringify(params));
+  console.log('[DEBUG] nextVideo:', nextVideo ? nextVideo.name : 'null');
+
+  // Keep ref in sync with state to prevent double-triggering
+  useEffect(() => {
+    showNextVideoOverlayRef.current = showNextVideoOverlay;
+  }, [showNextVideoOverlay]);
+
   const player = useVideoPlayer(params.videoPath, (player) => {
     player.loop = false;
     player.playbackRate = PLAYBACK_RATES[playbackRateIndex];
+    player.staysActiveInBackground = true;
+    player.showNowPlayingNotification = true;
 
     if (initialPosition > 0) {
       setTimeout(() => {
@@ -92,6 +108,7 @@ export default function VideoPlayerScreen() {
     };
   }, []);
 
+  // Track isPlaying state
   useEffect(() => {
     const subscription = player.addListener('playingChange', (event) => {
       setIsPlaying(event.isPlaying);
@@ -102,18 +119,129 @@ export default function VideoPlayerScreen() {
     };
   }, [player]);
 
+  // Backup: Use playingChange with 99% threshold check (workaround for playToEnd issues)
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (player.currentTime !== undefined) {
-        setCurrentTime(player.currentTime);
+    console.log('[DEBUG] Setting up playingChange backup listener');
+
+    const subscription = player.addListener('playingChange', ({ isPlaying }) => {
+      const currentTimeVal = player.currentTime;
+      const durationVal = player.duration;
+
+      console.log(`[DEBUG] playingChange: isPlaying=${isPlaying}, time=${currentTimeVal?.toFixed(1)}, duration=${durationVal?.toFixed(1)}`);
+
+      // Check if video finished (at 99% or more)
+      if (!isPlaying && durationVal > 0 && currentTimeVal >= durationVal * 0.99) {
+        console.log('[DEBUG] Video finished (99% threshold reached)');
+
+        const course = getCourse(params.courseId);
+        if (!course) return;
+        const section = course.sections.find(s => s.id === params.sectionId);
+        if (!section) return;
+        const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
+
+        if (currentIndex >= 0 && currentIndex < section.videos.length - 1 && !showNextVideoOverlayRef.current) {
+          console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (from playingChange 99%) ***');
+          setShowNextVideoOverlay(true);
+          setCountdown(5);
+        }
       }
-      if (player.duration !== undefined && player.duration > 0) {
-        setDuration(player.duration);
+    });
+
+    return () => {
+      console.log('[DEBUG] Cleaning up playingChange backup listener');
+      subscription.remove();
+    };
+  }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
+
+  // Primary: Trigger "Up Next" when video reaches end
+  useEffect(() => {
+    console.log('[DEBUG] Setting up playToEnd listener');
+
+    const subscription = player.addListener('playToEnd', () => {
+      console.log('[DEBUG] *** playToEnd EVENT FIRED ***');
+
+      // Recalculate if there's a next video
+      const course = getCourse(params.courseId);
+      if (!course) {
+        console.log('[DEBUG] playToEnd: Course NOT found!');
+        return;
+      }
+
+      const section = course.sections.find(s => s.id === params.sectionId);
+      if (!section) {
+        console.log('[DEBUG] playToEnd: Section NOT found!');
+        return;
+      }
+
+      const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
+      console.log(`[DEBUG] playToEnd: currentIndex=${currentIndex}, totalVideos=${section.videos.length}`);
+
+      if (currentIndex >= 0 && currentIndex < section.videos.length - 1 && !showNextVideoOverlayRef.current) {
+        console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (from playToEnd) ***');
+        setShowNextVideoOverlay(true);
+        setCountdown(5);
+      }
+    });
+
+    return () => {
+      console.log('[DEBUG] Cleaning up playToEnd listener');
+      subscription.remove();
+    };
+  }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
+
+  // Track time and trigger "Up Next" when 5 seconds remaining
+  useEffect(() => {
+    console.log('[DEBUG] Setting up time tracking interval');
+
+    const interval = setInterval(() => {
+      const currentTimeVal = player.currentTime;
+      const durationVal = player.duration;
+
+      if (currentTimeVal !== undefined) {
+        setCurrentTime(currentTimeVal);
+      }
+      if (durationVal !== undefined && durationVal > 0) {
+        setDuration(durationVal);
+
+        const timeRemaining = durationVal - currentTimeVal;
+
+        // Debug: Log time info when close to end
+        if (timeRemaining <= 10 && timeRemaining > 0) {
+          console.log(`[DEBUG] Time remaining: ${timeRemaining.toFixed(1)}s, Duration: ${durationVal.toFixed(1)}s`);
+        }
+
+        // Recalculate if there's a next video
+        const course = getCourse(params.courseId);
+        if (!course) {
+          console.log('[DEBUG] Course NOT found! courseId:', params.courseId);
+          return;
+        }
+        const section = course.sections.find(s => s.id === params.sectionId);
+        if (!section) {
+          console.log('[DEBUG] Section NOT found! sectionId:', params.sectionId);
+          return;
+        }
+        const currentIndex = section.videos.findIndex(v => v.id === params.videoId);
+        const hasNextVideo = currentIndex >= 0 && currentIndex < section.videos.length - 1;
+
+        if (timeRemaining <= 10 && timeRemaining > 0) {
+          console.log(`[DEBUG] Current index: ${currentIndex}, Total videos: ${section.videos.length}, Has next: ${hasNextVideo}`);
+        }
+
+        // Show "Up Next" button when 5 seconds or less remaining
+        if (timeRemaining <= 5 && timeRemaining > 0 && hasNextVideo && !showNextVideoOverlayRef.current) {
+          console.log('[DEBUG] *** SHOWING UP NEXT BUTTON (time-based) ***');
+          setShowNextVideoOverlay(true);
+          setCountdown(Math.ceil(timeRemaining));
+        }
       }
     }, 250);
 
-    return () => clearInterval(interval);
-  }, [player]);
+    return () => {
+      console.log('[DEBUG] Cleaning up time tracking interval');
+      clearInterval(interval);
+    };
+  }, [player, getCourse, params.courseId, params.sectionId, params.videoId]);
 
   useEffect(() => {
     progressSaveIntervalRef.current = setInterval(() => {
@@ -137,20 +265,17 @@ export default function VideoPlayerScreen() {
     };
   }, [params.videoId, currentTime, duration, updateVideoProgress]);
 
-  // Detect video end and show next video overlay
-  useEffect(() => {
-    if (duration > 0 && currentTime >= duration - 0.5 && nextVideo && !showNextVideoOverlay) {
-      setShowNextVideoOverlay(true);
-      setCountdown(AUTO_PLAY_COUNTDOWN);
-      player.pause();
-    }
-  }, [currentTime, duration, nextVideo, showNextVideoOverlay, player]);
 
   // Countdown timer for auto-play
   useEffect(() => {
-    if (showNextVideoOverlay && countdown > 0) {
+    if (showNextVideoOverlay) {
       countdownIntervalRef.current = setInterval(() => {
-        setCountdown(prev => prev - 1);
+        setCountdown(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
 
       return () => {
@@ -159,7 +284,7 @@ export default function VideoPlayerScreen() {
         }
       };
     }
-  }, [showNextVideoOverlay, countdown]);
+  }, [showNextVideoOverlay]);
 
   // Auto-play when countdown reaches 0
   useEffect(() => {
@@ -416,35 +541,24 @@ export default function VideoPlayerScreen() {
         </View>
       )}
 
-      {/* Up Next Overlay */}
+      {/* Up Next Button */}
       {showNextVideoOverlay && nextVideo && (
-        <View style={styles.nextVideoOverlay}>
-          <View style={styles.nextVideoCard}>
-            <Text variant="labelLarge" style={styles.upNextLabel}>
-              Up Next in {countdown}s
-            </Text>
-            <Text variant="titleMedium" style={styles.nextVideoTitle} numberOfLines={2}>
-              {nextVideo.name}
-            </Text>
-            <View style={styles.nextVideoButtons}>
-              <Button
-                mode="contained"
-                onPress={playNextVideo}
-                icon="play"
-                style={styles.playNowButton}
-              >
-                Play Now
-              </Button>
-              <Button
-                mode="outlined"
-                onPress={cancelAutoPlay}
-                textColor="#FFFFFF"
-                style={styles.cancelButton}
-              >
-                Cancel
-              </Button>
-            </View>
-          </View>
+        <View style={styles.nextVideoButton}>
+          <Button
+            mode="contained"
+            onPress={playNextVideo}
+            icon="skip-next"
+            contentStyle={styles.nextButtonContent}
+          >
+            Next ({countdown}s)
+          </Button>
+          <IconButton
+            icon="close"
+            size={20}
+            iconColor="#FFFFFF"
+            onPress={cancelAutoPlay}
+            style={styles.cancelIconButton}
+          />
         </View>
       )}
     </View>
@@ -550,40 +664,19 @@ const styles = StyleSheet.create({
   timeText: {
     color: '#FFFFFF',
   },
-  nextVideoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nextVideoCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    maxWidth: 400,
-    width: '80%',
-  },
-  upNextLabel: {
-    color: '#FFFFFF',
-    opacity: 0.8,
-    marginBottom: 8,
-  },
-  nextVideoTitle: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontWeight: '600',
-    marginBottom: 24,
-  },
-  nextVideoButtons: {
+  nextVideoButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 24,
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
-  playNowButton: {
-    minWidth: 120,
+  nextButtonContent: {
+    paddingHorizontal: 8,
   },
-  cancelButton: {
-    minWidth: 100,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  cancelIconButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    margin: 0,
   },
 });
