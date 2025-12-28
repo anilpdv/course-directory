@@ -1,46 +1,205 @@
 import { File, Directory } from 'expo-file-system/next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Course, Section, Video, VideoFormat } from '../types';
+import { Course, Section, Video, VideoFormat, StoredCourse } from '../types';
 
 const SUPPORTED_VIDEO_EXTENSIONS = ['mp4', 'mov', 'm4v'];
-const COURSES_PATH_KEY = '@courseviewer/courses_path';
+const COURSES_DATA_KEY = '@courseviewer/courses_data';
+const OLD_COURSES_PATH_KEY = '@courseviewer/courses_path'; // For migration
 
 class FileSystemService {
-  private cachedCoursesPath: string | null = null;
-
-  async getCoursesPath(): Promise<string | null> {
-    if (this.cachedCoursesPath) {
-      return this.cachedCoursesPath;
-    }
-    const path = await AsyncStorage.getItem(COURSES_PATH_KEY);
-    this.cachedCoursesPath = path;
-    return path;
-  }
-
-  async setCoursesPath(path: string): Promise<void> {
-    await AsyncStorage.setItem(COURSES_PATH_KEY, path);
-    this.cachedCoursesPath = path;
-  }
-
-  async clearCoursesPath(): Promise<void> {
-    await AsyncStorage.removeItem(COURSES_PATH_KEY);
-    this.cachedCoursesPath = null;
-  }
-
-  async pickCoursesFolder(): Promise<string | null> {
+  // Pick a folder (no persistence, just returns the path)
+  async pickFolder(): Promise<string | null> {
     try {
       const directory = await Directory.pickDirectoryAsync();
-
-      if (directory) {
-        const dirPath = directory.uri;
-        await this.setCoursesPath(dirPath);
-        return dirPath;
-      }
-      return null;
+      return directory ? directory.uri : null;
     } catch (error) {
       console.error('Error picking folder:', error);
       return null;
     }
+  }
+
+  // Get stored courses from AsyncStorage
+  async getStoredCourses(): Promise<StoredCourse[]> {
+    try {
+      const data = await AsyncStorage.getItem(COURSES_DATA_KEY);
+      if (data) {
+        const parsed = JSON.parse(data);
+        return parsed.courses || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error loading stored courses:', error);
+      return [];
+    }
+  }
+
+  // Save stored courses to AsyncStorage
+  async saveStoredCourses(courses: StoredCourse[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(COURSES_DATA_KEY, JSON.stringify({ courses }));
+    } catch (error) {
+      console.error('Error saving stored courses:', error);
+    }
+  }
+
+  // Migration from old single-path format
+  async migrateFromSinglePath(): Promise<StoredCourse[]> {
+    try {
+      const oldPath = await AsyncStorage.getItem(OLD_COURSES_PATH_KEY);
+      if (oldPath) {
+        const analysis = await this.analyzeFolder(oldPath);
+        if (analysis.courses.length > 0) {
+          await this.saveStoredCourses(analysis.courses);
+          await AsyncStorage.removeItem(OLD_COURSES_PATH_KEY);
+          return analysis.courses;
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error('Error migrating from old format:', error);
+      return [];
+    }
+  }
+
+  // Analyze a folder to determine if it contains single or multiple courses
+  async analyzeFolder(folderPath: string): Promise<{
+    type: 'single' | 'multiple';
+    courses: StoredCourse[];
+  }> {
+    try {
+      const folder = new Directory(folderPath);
+      if (!folder.exists) {
+        return { type: 'single', courses: [] };
+      }
+
+      // Check if folder itself has videos (single course with flat structure)
+      const directVideos = await this.hasVideosInFolder(folder);
+      if (directVideos) {
+        return {
+          type: 'single',
+          courses: [{
+            id: this.generateId(folderPath),
+            name: this.cleanName(this.extractFolderName(folderPath)),
+            folderPath: folderPath,
+            addedAt: Date.now(),
+          }]
+        };
+      }
+
+      // Check subdirectories
+      const contents = folder.list();
+      const potentialCourses: StoredCourse[] = [];
+
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+
+        if (subDir.exists) {
+          const hasContent = await this.hasCourseContent(subDir);
+          if (hasContent) {
+            potentialCourses.push({
+              id: this.generateId(subDir.uri),
+              name: this.cleanName(this.extractFolderName(subDir.uri)),
+              folderPath: subDir.uri,
+              addedAt: Date.now(),
+            });
+          }
+        }
+      }
+
+      if (potentialCourses.length > 0) {
+        return { type: 'multiple', courses: potentialCourses };
+      }
+
+      // Check if folder has section subdirectories (folders with videos) - treat as single course
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+        if (subDir.exists) {
+          const hasVideos = await this.hasVideosInFolder(subDir);
+          if (hasVideos) {
+            return {
+              type: 'single',
+              courses: [{
+                id: this.generateId(folderPath),
+                name: this.cleanName(this.extractFolderName(folderPath)),
+                folderPath: folderPath,
+                addedAt: Date.now(),
+              }]
+            };
+          }
+        }
+      }
+
+      return { type: 'single', courses: [] };
+    } catch (error) {
+      console.error('Error analyzing folder:', error);
+      return { type: 'single', courses: [] };
+    }
+  }
+
+  // Check if a folder has videos directly in it
+  private async hasVideosInFolder(folder: Directory): Promise<boolean> {
+    try {
+      const contents = folder.list();
+      return contents.some(item => this.isVideoFile(this.getItemName(item)));
+    } catch {
+      return false;
+    }
+  }
+
+  // Check if a folder is a course (has videos at any level)
+  private async hasCourseContent(folder: Directory): Promise<boolean> {
+    try {
+      // Check direct videos
+      if (await this.hasVideosInFolder(folder)) return true;
+
+      // Check subdirectories (sections)
+      const contents = folder.list();
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+        if (subDir.exists && await this.hasVideosInFolder(subDir)) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  // Scan a single course from its stored reference
+  async scanSingleCourse(storedCourse: StoredCourse): Promise<Course | null> {
+    try {
+      const courseDir = new Directory(storedCourse.folderPath);
+      if (!courseDir.exists) {
+        return null;
+      }
+
+      const course = await this.scanCourseDirectory(courseDir, storedCourse.name);
+      // Use stored ID for consistency
+      course.id = storedCourse.id;
+      course.name = storedCourse.name;
+      return course;
+    } catch (error) {
+      console.error(`Error scanning course ${storedCourse.name}:`, error);
+      return null;
+    }
+  }
+
+  // Scan all stored courses
+  async scanAllCourses(storedCourses: StoredCourse[]): Promise<Course[]> {
+    const courses: Course[] = [];
+
+    for (const stored of storedCourses) {
+      const course = await this.scanSingleCourse(stored);
+      if (course && course.totalVideos > 0) {
+        courses.push(course);
+      }
+    }
+
+    return courses;
   }
 
   private getItemName(item: File | Directory): string {
@@ -72,77 +231,7 @@ class FileSystemService {
     return name || 'Videos';
   }
 
-  async scanCourses(): Promise<Course[]> {
-    const coursesPath = await this.getCoursesPath();
-
-    if (!coursesPath) {
-      return [];
-    }
-
-    const courses: Course[] = [];
-
-    try {
-      const coursesDir = new Directory(coursesPath);
-
-      if (!coursesDir.exists) {
-        return courses;
-      }
-
-      const courseId = this.generateId(coursesDir.uri);
-      const mainSectionId = this.generateId(`${coursesDir.uri}/main`);
-      const directVideos = await this.scanVideosInFolder(
-        coursesDir,
-        mainSectionId,
-        courseId
-      );
-
-      if (directVideos.length > 0) {
-        const folderName = this.extractFolderName(coursesDir.uri);
-        courses.push({
-          id: this.generateId(coursesDir.uri),
-          name: this.cleanName(decodeURIComponent(folderName)),
-          folderPath: coursesDir.uri,
-          sections: [{
-            id: this.generateId(`${coursesDir.uri}/main`),
-            name: 'Videos',
-            folderPath: coursesDir.uri,
-            order: 0,
-            courseId: this.generateId(coursesDir.uri),
-            videos: directVideos,
-          }],
-          totalVideos: directVideos.length,
-        });
-        return courses;
-      }
-
-      const contents = coursesDir.list();
-      const sortedContents = contents.sort((a, b) =>
-        this.getItemName(a).localeCompare(this.getItemName(b))
-      );
-
-      for (const item of sortedContents) {
-        const courseName = this.getItemName(item);
-        const courseDir = new Directory(coursesDir, courseName);
-
-        if (courseDir.exists) {
-          try {
-            const course = await this.scanCourse(courseDir, courseName);
-            if (course.sections.length > 0 || course.totalVideos > 0) {
-              courses.push(course);
-            }
-          } catch (e) {
-            console.log(`Skipping folder: ${courseName}`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error scanning courses:', error);
-    }
-
-    return courses;
-  }
-
-  private async scanCourse(courseDir: Directory, courseName: string): Promise<Course> {
+  private async scanCourseDirectory(courseDir: Directory, courseName: string): Promise<Course> {
     const sections: Section[] = [];
     let totalVideos = 0;
 

@@ -17,53 +17,25 @@ import { useProgress } from '@shared/contexts/ProgressContext';
 export function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { state, pickCoursesFolder, clearCoursesFolder, scanCourses } = useCourses();
+  const { state, addCourses, scanCourses } = useCourses();
   const { clearAllProgress, state: progressState } = useProgress();
   const [isClearing, setIsClearing] = useState(false);
 
-  const { coursesPath, courses } = state;
+  const { courses } = state;
   const progressCount = Object.keys(progressState.data.videos).length;
 
-  const getFolderName = (path: string | null) => {
-    if (!path) return 'Not selected';
-    const decoded = decodeURIComponent(path);
-    const cleanPath = decoded.replace(/^file:\/\//, '').replace(/\/+$/, '');
-    const parts = cleanPath.split('/');
-
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const part = parts[i];
-      if (part &&
-          !part.match(/^[A-F0-9-]{36}$/i) &&
-          !part.includes('Containers') &&
-          !part.includes('AppGroup') &&
-          part !== 'File Provider Storage' &&
-          part !== 'Shared') {
-        return part;
-      }
+  const handleAddCourse = async () => {
+    const result = await addCourses();
+    if (result.added > 0) {
+      Alert.alert(
+        'Courses Added',
+        `Added ${result.added} course${result.added !== 1 ? 's' : ''}.${
+          result.duplicates > 0 ? ` ${result.duplicates} duplicate${result.duplicates !== 1 ? 's' : ''} skipped.` : ''
+        }`
+      );
+    } else if (result.duplicates > 0) {
+      Alert.alert('Already Added', 'These courses are already in your library.');
     }
-    return parts[parts.length - 1] || 'Selected Folder';
-  };
-
-  const handleChangeFolder = async () => {
-    await pickCoursesFolder();
-  };
-
-  const handleClearFolder = () => {
-    Alert.alert(
-      'Clear Courses Folder',
-      'This will remove the selected folder. You will need to select a new folder to view courses.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            await clearCoursesFolder();
-            router.back();
-          },
-        },
-      ]
-    );
   };
 
   const handleClearProgress = () => {
@@ -97,59 +69,32 @@ export function SettingsScreen() {
       edges={['bottom']}
     >
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Courses Folder Section */}
+        {/* Courses Section */}
         <View style={styles.section}>
           <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            Courses Folder
+            Courses
           </Text>
           <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
             <List.Item
-              title={coursesPath ? getFolderName(coursesPath) : 'No Folder Selected'}
-              description={coursesPath ? 'Tap Change to select a different folder' : 'Tap Change to select your courses folder'}
+              title="Your Library"
+              description={`${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
               left={() => (
                 <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="folder" size={22} color={theme.colors.primary} />
+                  <Icon source="book-multiple" size={22} color={theme.colors.primary} />
                 </View>
               )}
               titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
               descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
             />
             <View style={styles.buttonRow}>
-              <Button mode="contained" onPress={handleChangeFolder} style={styles.actionButton}>
-                Change
+              <Button mode="contained" onPress={handleAddCourse} style={styles.actionButton}>
+                Add Course
               </Button>
-              {coursesPath && (
-                <Button
-                  mode="contained"
-                  onPress={handleClearFolder}
-                  buttonColor={theme.colors.error}
-                  style={styles.actionButton}
-                >
-                  Clear
-                </Button>
-              )}
+              <Button mode="outlined" onPress={handleRescan} style={styles.actionButton}>
+                Rescan
+              </Button>
             </View>
           </Surface>
-
-          {coursesPath && (
-            <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-              <List.Item
-                title="Rescan Courses"
-                description={`Found ${courses.length} course${courses.length !== 1 ? 's' : ''}`}
-                left={() => (
-                  <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                    <Icon source="refresh" size={22} color={theme.colors.primary} />
-                  </View>
-                )}
-                right={(props) => (
-                  <Icon {...props} source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
-                )}
-                onPress={handleRescan}
-                titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
-                descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-              />
-            </Surface>
-          )}
         </View>
 
         {/* Data Management Section */}

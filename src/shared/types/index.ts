@@ -54,13 +54,21 @@ export interface AppSettings {
   defaultPlaybackRate: number;
 }
 
+// Stored course reference (persisted to AsyncStorage)
+export interface StoredCourse {
+  id: string;
+  name: string;
+  folderPath: string;
+  addedAt: number;
+}
+
 // Course context state
 export interface CoursesState {
   courses: Course[];
+  storedCourses: StoredCourse[];
   isLoading: boolean;
   error: string | null;
-  coursesPath: string | null;
-  hasSelectedFolder: boolean;
+  hasCourses: boolean;
 }
 
 // Progress context state
@@ -74,7 +82,9 @@ export type CoursesAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_COURSES'; payload: Course[] }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_COURSES_PATH'; payload: string | null };
+  | { type: 'SET_STORED_COURSES'; payload: StoredCourse[] }
+  | { type: 'ADD_STORED_COURSES'; payload: StoredCourse[] }
+  | { type: 'REMOVE_STORED_COURSE'; payload: string };
 
 export type ProgressAction =
   | { type: 'LOAD_PROGRESS'; payload: ProgressData }

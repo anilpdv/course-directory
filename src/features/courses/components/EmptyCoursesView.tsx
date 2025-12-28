@@ -4,10 +4,10 @@ import { Text, Button, Icon, useTheme } from 'react-native-paper';
 
 interface EmptyCoursesViewProps {
   onRescan: () => void;
-  onChangeFolder: () => void;
+  onAddCourse: () => void;
 }
 
-export function EmptyCoursesView({ onRescan, onChangeFolder }: EmptyCoursesViewProps) {
+export function EmptyCoursesView({ onRescan, onAddCourse }: EmptyCoursesViewProps) {
   const theme = useTheme();
 
   return (
@@ -23,7 +23,7 @@ export function EmptyCoursesView({ onRescan, onChangeFolder }: EmptyCoursesViewP
         variant="bodyMedium"
         style={[styles.text, { color: theme.colors.onSurfaceVariant }]}
       >
-        No video courses were found in the selected folder.
+        No video courses were found. Try rescanning or add more courses.
       </Text>
       <Button
         mode="contained"
@@ -31,15 +31,15 @@ export function EmptyCoursesView({ onRescan, onChangeFolder }: EmptyCoursesViewP
         icon="refresh"
         style={styles.button}
       >
-        Rescan Folder
+        Rescan
       </Button>
       <Button
         mode="outlined"
-        onPress={onChangeFolder}
-        icon="folder-swap"
+        onPress={onAddCourse}
+        icon="folder-plus"
         style={styles.button}
       >
-        Change Folder
+        Add Course
       </Button>
     </View>
   );

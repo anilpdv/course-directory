@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -9,6 +9,7 @@ import {
   Surface,
   Icon,
   useTheme,
+  FAB,
 } from 'react-native-paper';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { Course } from '@shared/types';
@@ -18,14 +19,14 @@ import { EmptyCoursesView } from '../components/EmptyCoursesView';
 export function CoursesListScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { state, scanCourses, pickCoursesFolder } = useCourses();
-  const { courses, isLoading, error, hasSelectedFolder } = state;
+  const { state, scanCourses, addCourses, removeCourse } = useCourses();
+  const { courses, isLoading, error, hasCourses } = state;
 
   useEffect(() => {
-    if (hasSelectedFolder) {
+    if (hasCourses) {
       scanCourses();
     }
-  }, [hasSelectedFolder, scanCourses]);
+  }, [hasCourses, scanCourses]);
 
   const handleCoursePress = useCallback(
     (course: Course) => {
@@ -34,19 +35,33 @@ export function CoursesListScreen() {
     [router]
   );
 
-  const handleSelectFolder = useCallback(async () => {
-    await pickCoursesFolder();
-  }, [pickCoursesFolder]);
+  const handleAddCourse = useCallback(async () => {
+    const result = await addCourses();
+    if (result.added > 0) {
+      Alert.alert(
+        'Courses Added',
+        `Added ${result.added} course${result.added !== 1 ? 's' : ''}.${
+          result.duplicates > 0 ? ` ${result.duplicates} duplicate${result.duplicates !== 1 ? 's' : ''} skipped.` : ''
+        }`
+      );
+    } else if (result.duplicates > 0) {
+      Alert.alert('Already Added', 'These courses are already in your library.');
+    }
+  }, [addCourses]);
 
   const renderCourse = useCallback(
     ({ item }: { item: Course }) => (
-      <CourseCard course={item} onPress={() => handleCoursePress(item)} />
+      <CourseCard
+        course={item}
+        onPress={() => handleCoursePress(item)}
+        onRemove={removeCourse}
+      />
     ),
-    [handleCoursePress]
+    [handleCoursePress, removeCourse]
   );
 
-  // Welcome screen - no folder selected
-  if (!hasSelectedFolder) {
+  // Welcome screen - no courses added
+  if (!hasCourses) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -64,28 +79,28 @@ export function CoursesListScreen() {
             variant="bodyLarge"
             style={[styles.welcomeText, { color: theme.colors.onSurfaceVariant }]}
           >
-            Select a folder containing your video courses to get started.
+            Add your video courses to get started.
           </Text>
 
           <Button
             mode="contained"
-            onPress={handleSelectFolder}
+            onPress={handleAddCourse}
             loading={isLoading}
             disabled={isLoading}
-            icon="folder-open"
+            icon="folder-plus"
             style={styles.selectFolderButton}
             contentStyle={styles.selectFolderContent}
             labelStyle={styles.selectFolderLabel}
           >
-            Select Courses Folder
+            Add Course
           </Button>
 
           <Text
             variant="bodySmall"
             style={[styles.hintText, { color: theme.colors.onSurfaceVariant }]}
           >
-            Your folder should contain course subfolders,{'\n'}
-            each with section folders containing videos.
+            Select a course folder or a folder{'\n'}
+            containing multiple courses.
           </Text>
 
           <Surface style={[styles.structureExample, { backgroundColor: theme.colors.surface }]} elevation={1}>
@@ -99,12 +114,11 @@ export function CoursesListScreen() {
               variant="bodySmall"
               style={[styles.structureCode, { color: theme.colors.onSurface }]}
             >
-              Selected Folder/{'\n'}
-              ├── Course Name/{'\n'}
-              │   ├── 01 - Section/{'\n'}
-              │   │   └── video.mp4{'\n'}
-              │   └── 02 - Section/{'\n'}
-              │       └── video.mp4
+              Course Folder/{'\n'}
+              ├── 01 - Section/{'\n'}
+              │   └── video.mp4{'\n'}
+              └── 02 - Section/{'\n'}
+                  └── video.mp4
             </Text>
           </Surface>
         </View>
@@ -138,16 +152,8 @@ export function CoursesListScreen() {
   const renderHeader = () => (
     <View style={styles.header}>
       <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-        {courses.length} course{courses.length !== 1 ? 's' : ''} found
+        {courses.length} course{courses.length !== 1 ? 's' : ''} in your library
       </Text>
-      <Button
-        mode="text"
-        compact
-        onPress={handleSelectFolder}
-        labelStyle={{ fontSize: 14 }}
-      >
-        Change Folder
-      </Button>
     </View>
   );
 
@@ -168,27 +174,38 @@ export function CoursesListScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={courses}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCourse}
-          ListHeaderComponent={courses.length > 0 ? renderHeader : null}
-          ListEmptyComponent={
-            <EmptyCoursesView onRescan={scanCourses} onChangeFolder={handleSelectFolder} />
-          }
-          contentContainerStyle={[
-            styles.listContent,
-            courses.length === 0 && styles.listContentEmpty,
-          ]}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={scanCourses}
-              tintColor={theme.colors.primary}
-              colors={[theme.colors.primary]}
+        <>
+          <FlatList
+            data={courses}
+            keyExtractor={(item) => item.id}
+            renderItem={renderCourse}
+            ListHeaderComponent={courses.length > 0 ? renderHeader : null}
+            ListEmptyComponent={
+              <EmptyCoursesView onRescan={scanCourses} onAddCourse={handleAddCourse} />
+            }
+            contentContainerStyle={[
+              styles.listContent,
+              courses.length === 0 && styles.listContentEmpty,
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={scanCourses}
+                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]}
+              />
+            }
+          />
+          {courses.length > 0 && (
+            <FAB
+              icon="plus"
+              label="Add Course"
+              style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+              onPress={handleAddCourse}
+              color={theme.colors.onPrimary}
             />
-          }
-        />
+          )}
+        </>
       )}
     </SafeAreaView>
   );
@@ -256,7 +273,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   listContent: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 80,
   },
   listContentEmpty: {
     flex: 1,
@@ -271,5 +289,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 24,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 24,
+    elevation: 4,
   },
 });

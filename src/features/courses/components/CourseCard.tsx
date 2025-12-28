@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, StyleSheet, Alert } from 'react-native';
 import { Card, Text, ProgressBar, Chip, Icon, useTheme } from 'react-native-paper';
 import { Course } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
@@ -7,18 +7,37 @@ import { useProgress } from '@shared/contexts/ProgressContext';
 interface CourseCardProps {
   course: Course;
   onPress: () => void;
+  onRemove?: (courseId: string) => void;
 }
 
-export function CourseCard({ course, onPress }: CourseCardProps) {
+export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
   const theme = useTheme();
   const { getCourseProgress } = useProgress();
   const progress = getCourseProgress(course);
   const isComplete = progress.percent >= 100;
 
+  const handleLongPress = useCallback(() => {
+    if (onRemove) {
+      Alert.alert(
+        'Remove Course',
+        `Remove "${course.name}" from your library? This won't delete the video files.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: () => onRemove(course.id),
+          },
+        ]
+      );
+    }
+  }, [course, onRemove]);
+
   return (
     <Card
       style={[styles.card, { backgroundColor: theme.colors.surface }]}
       onPress={onPress}
+      onLongPress={onRemove ? handleLongPress : undefined}
       mode="elevated"
     >
       <Card.Content style={styles.content}>
