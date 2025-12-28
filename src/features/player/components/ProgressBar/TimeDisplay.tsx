@@ -1,0 +1,33 @@
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
+import { formatTime } from '../../utils';
+
+interface TimeDisplayProps {
+  currentTime: number;
+  duration: number;
+  variant?: 'labelSmall' | 'labelMedium';
+}
+
+export function TimeDisplay({ currentTime, duration, variant = 'labelMedium' }: TimeDisplayProps) {
+  return (
+    <View style={styles.container}>
+      <Text variant={variant} style={styles.text}>
+        {formatTime(currentTime)}
+      </Text>
+      <Text variant={variant} style={styles.text}>
+        {formatTime(duration)}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  text: {
+    color: '#FFFFFF',
+  },
+});
