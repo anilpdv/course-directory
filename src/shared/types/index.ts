@@ -30,6 +30,7 @@ export interface Course {
   folderPath: string;
   sections: Section[];
   totalVideos: number;
+  icon: string;
 }
 
 // Video progress tracking
@@ -60,6 +61,7 @@ export interface StoredCourse {
   name: string;
   folderPath: string;
   addedAt: number;
+  icon: string;
 }
 
 // Course context state

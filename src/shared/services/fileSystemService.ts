@@ -1,6 +1,7 @@
 import { File, Directory } from 'expo-file-system/next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Course, Section, Video, VideoFormat, StoredCourse } from '../types';
+import { getRandomCourseIcon } from '../utils/courseIcons';
 
 const SUPPORTED_VIDEO_EXTENSIONS = ['mp4', 'mov', 'm4v'];
 const COURSES_DATA_KEY = '@courseviewer/courses_data';
@@ -24,7 +25,22 @@ class FileSystemService {
       const data = await AsyncStorage.getItem(COURSES_DATA_KEY);
       if (data) {
         const parsed = JSON.parse(data);
-        return parsed.courses || [];
+        const courses: StoredCourse[] = parsed.courses || [];
+
+        // Migrate existing courses without icons
+        let needsSave = false;
+        for (const course of courses) {
+          if (!course.icon) {
+            course.icon = getRandomCourseIcon();
+            needsSave = true;
+          }
+        }
+
+        if (needsSave) {
+          await this.saveStoredCourses(courses);
+        }
+
+        return courses;
       }
       return [];
     } catch (error) {
@@ -90,6 +106,7 @@ class FileSystemService {
         name: this.cleanName(this.extractFolderName(folderPath)),
         folderPath: folderPath,
         addedAt: Date.now(),
+        icon: getRandomCourseIcon(),
       };
     } catch (error) {
       console.error('Error analyzing single course:', error);
@@ -119,6 +136,7 @@ class FileSystemService {
             name: this.cleanName(this.extractFolderName(folderPath)),
             folderPath: folderPath,
             addedAt: Date.now(),
+            icon: getRandomCourseIcon(),
           }]
         };
       }
@@ -158,6 +176,7 @@ class FileSystemService {
             name: this.cleanName(this.extractFolderName(folderPath)),
             folderPath: folderPath,
             addedAt: Date.now(),
+            icon: getRandomCourseIcon(),
           }]
         };
       }
@@ -176,6 +195,7 @@ class FileSystemService {
               name: this.cleanName(this.extractFolderName(subDir.uri)),
               folderPath: subDir.uri,
               addedAt: Date.now(),
+              icon: getRandomCourseIcon(),
             });
           }
         }
@@ -278,9 +298,10 @@ class FileSystemService {
       }
 
       const course = await this.scanCourseDirectory(courseDir, storedCourse.name);
-      // Use stored ID for consistency
+      // Use stored ID and icon for consistency
       course.id = storedCourse.id;
       course.name = storedCourse.name;
+      course.icon = storedCourse.icon;
       return course;
     } catch (error) {
       console.error(`Error scanning course ${storedCourse.name}:`, error);
@@ -403,6 +424,7 @@ class FileSystemService {
       folderPath: courseDir.uri,
       sections,
       totalVideos,
+      icon: getRandomCourseIcon(),
     };
   }
 

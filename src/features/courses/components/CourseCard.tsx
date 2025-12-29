@@ -36,7 +36,7 @@ export function CourseCard({ course, onPress, onRemove, isTablet }: CourseCardPr
         <View style={styles.header}>
           <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
             <Icon
-              source="book-open-variant"
+              source={course.icon || 'book-open-variant'}
               size={32}
               color={theme.colors.primary}
             />
