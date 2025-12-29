@@ -5,7 +5,7 @@ import { Text, Surface, List, Button, Divider, Icon, useTheme } from 'react-nati
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
-import { handleSingleCourseResult, handleMultipleCoursesResult } from '@shared/utils/courseAlerts';
+import { handleSingleCourseResult, handleMultipleCoursesResult, withCount } from '@shared/utils';
 import { TagList } from '@features/tags';
 import { spacing, borderRadius, shadows } from '@shared/theme';
 
@@ -109,7 +109,7 @@ export function SettingsScreen() {
         <SettingsSection title="Courses">
           <List.Item
             title="Your Library"
-            description={`${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
+            description={`${withCount(courses.length, 'course')} in your library`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Icon source="book-multiple" size={22} color={theme.colors.primary} />
@@ -135,7 +135,7 @@ export function SettingsScreen() {
         <SettingsSection title="Tags">
           <List.Item
             title="Manage Tags"
-            description={`${tagCount} tag${tagCount !== 1 ? 's' : ''} created`}
+            description={`${withCount(tagCount, 'tag')} created`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Icon source="tag-multiple" size={22} color={theme.colors.primary} />
@@ -152,7 +152,7 @@ export function SettingsScreen() {
         <SettingsSection title="Data Management">
           <List.Item
             title="Watch Progress"
-            description={`${progressCount} video${progressCount !== 1 ? 's' : ''} tracked`}
+            description={`${withCount(progressCount, 'video')} tracked`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Icon source="chart-line" size={22} color={theme.colors.primary} />

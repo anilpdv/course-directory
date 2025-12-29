@@ -4,7 +4,7 @@ import { Text, Icon, useTheme } from 'react-native-paper';
 import { Section, Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { VideoItem } from './VideoItem';
-import { spacing, borderRadius } from '@shared/theme';
+import { spacing, borderRadius, progressBarHeights, fontWeights } from '@shared/theme';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: '600',
+    fontWeight: fontWeights.semibold,
     marginBottom: spacing.xs,
   },
   rightContainer: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm + 4,
   },
   progressTrack: {
-    height: 4,
+    height: progressBarHeights.medium,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
   },

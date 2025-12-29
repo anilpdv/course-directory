@@ -5,10 +5,9 @@ import { VideoPlayer } from 'expo-video';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { Video, VideoProgress } from '@shared/types';
 import { VideoContainer } from '../components/VideoContainer';
-import { TopBar, CenterControls, BottomBar } from '../components/ControlsOverlay';
-import { NextVideoOverlay } from '../components/NextVideoOverlay';
+import { ControlsOverlayView } from '../components/ControlsOverlayView';
 import { VideoPlaylist } from '../components/VideoPlaylist';
-import { colors } from '@shared/theme/colors';
+import { colors, aspectRatios } from '@shared/theme';
 import { useDeviceType } from '@shared/hooks/useDeviceType';
 
 interface PortraitLayoutProps {
@@ -95,48 +94,30 @@ export function PortraitLayout({
         ]}>
         <VideoContainer player={player} isFullscreen={false} onPress={onToggleControls} />
 
-        {/* Controls Overlay */}
         {isControlsVisible && (
-          <View style={styles.controlsOverlay}>
-            <TopBar
-              videoName={videoName}
-              playbackRate={playbackRate}
-              isFullscreen={false}
-              insets={insets}
-              onClose={onClose}
-              onPlaybackRateChange={onPlaybackRateChange}
-              onToggleFullscreen={onToggleFullscreen}
-            />
-
-            <CenterControls
-              isPlaying={isPlaying}
-              onPlayPause={onPlayPause}
-              onSeekBackward={onSeekBackward}
-              onSeekForward={onSeekForward}
-              size="normal"
-            />
-
-            <BottomBar
-              currentTime={currentTime}
-              duration={duration}
-              progress={progressPercent}
-              insets={insets}
-              isFullscreen={false}
-              onSeek={onSeek}
-              onSeekStart={onSeekStart}
-              onSeekEnd={onSeekEnd}
-            />
-          </View>
-        )}
-
-        {/* Next Video Overlay */}
-        {showNextVideoOverlay && nextVideo && (
-          <NextVideoOverlay
-            countdown={countdown}
-            insets={insets}
+          <ControlsOverlayView
+            videoName={videoName}
             isFullscreen={false}
+            insets={insets}
+            isPlaying={isPlaying}
+            playbackRate={playbackRate}
+            currentTime={currentTime}
+            duration={duration}
+            progressPercent={progressPercent}
+            showNextVideoOverlay={showNextVideoOverlay}
+            countdown={countdown}
+            nextVideo={nextVideo}
+            onClose={onClose}
+            onPlayPause={onPlayPause}
+            onPlaybackRateChange={onPlaybackRateChange}
+            onSeek={onSeek}
+            onSeekStart={onSeekStart}
+            onSeekEnd={onSeekEnd}
+            onSeekBackward={onSeekBackward}
+            onSeekForward={onSeekForward}
+            onToggleFullscreen={onToggleFullscreen}
             onPlayNext={onPlayNext}
-            onCancel={onCancelAutoPlay}
+            onCancelAutoPlay={onCancelAutoPlay}
           />
         )}
       </View>
@@ -165,14 +146,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   videoContainerPhone: {
-    aspectRatio: 16 / 9,
+    aspectRatio: aspectRatios.standard,
   },
   videoContainerTablet: {
-    aspectRatio: 2.5,
-  },
-  controlsOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.controlsOverlay,
-    justifyContent: 'space-between',
+    aspectRatio: aspectRatios.tablet,
   },
 });

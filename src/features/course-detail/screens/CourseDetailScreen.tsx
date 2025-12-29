@@ -14,6 +14,7 @@ import {
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { Video } from '@shared/types';
+import { withCount } from '@shared/utils';
 import { SectionAccordion } from '../components/SectionAccordion';
 
 export function CourseDetailScreen() {
@@ -125,7 +126,7 @@ export function CourseDetailScreen() {
                 style={styles.statChip}
                 textStyle={{ fontSize: 12 }}
               >
-                {course.sections.length} section{course.sections.length !== 1 ? 's' : ''}
+                {withCount(course.sections.length, 'section')}
               </Chip>
               <Chip
                 compact
@@ -134,7 +135,7 @@ export function CourseDetailScreen() {
                 style={styles.statChip}
                 textStyle={{ fontSize: 12 }}
               >
-                {course.totalVideos} video{course.totalVideos !== 1 ? 's' : ''}
+                {withCount(course.totalVideos, 'video')}
               </Chip>
             </View>
 

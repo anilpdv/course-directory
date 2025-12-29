@@ -72,15 +72,48 @@ export const opacity = {
 
 // Icon size presets
 export const iconSizes = {
-  xs: 16,
-  sm: 20,
-  md: 24,
-  lg: 32,
-  xl: 48,
+  xs: 14,
+  sm: 16,
+  md: 22,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
 } as const;
+
+// Progress bar height presets
+export const progressBarHeights = {
+  thin: 3, // VideoItem, PlaylistItem
+  medium: 4, // SectionAccordion
+  thick: 6, // ProgressBar (player)
+} as const;
+
+// Control button size presets
+export const buttonSizes = {
+  small: { width: 48, height: 48, borderRadius: 24 },
+  normal: { width: 64, height: 64, borderRadius: 32 },
+  large: { width: 80, height: 80, borderRadius: 40 },
+} as const;
+
+// Video aspect ratio presets
+export const aspectRatios = {
+  standard: 16 / 9,
+  tablet: 2.5,
+} as const;
+
+// Font weight presets
+export const fontWeights = {
+  normal: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+};
 
 export type Shadows = typeof shadows;
 export type Durations = typeof durations;
 export type Easings = typeof easings;
 export type Opacity = typeof opacity;
 export type IconSizes = typeof iconSizes;
+export type ProgressBarHeights = typeof progressBarHeights;
+export type ButtonSizes = typeof buttonSizes;
+export type AspectRatios = typeof aspectRatios;
+export type FontWeights = typeof fontWeights;

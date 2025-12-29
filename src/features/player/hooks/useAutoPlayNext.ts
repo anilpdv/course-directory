@@ -35,31 +35,12 @@ export function useAutoPlayNext({
     showNextVideoOverlayRef.current = showNextVideoOverlay;
   }, [showNextVideoOverlay]);
 
-  // Primary: Trigger "Up Next" when video reaches end
+  // Trigger "Up Next" overlay when video reaches end
   useEffect(() => {
     const subscription = player.addListener('playToEnd', () => {
       if (nextVideo && !showNextVideoOverlayRef.current) {
         setShowNextVideoOverlay(true);
         setCountdown(AUTO_PLAY_COUNTDOWN);
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [player, nextVideo]);
-
-  // Backup: Check at 99% threshold
-  useEffect(() => {
-    const subscription = player.addListener('playingChange', ({ isPlaying }) => {
-      const currentTimeVal = player.currentTime;
-      const durationVal = player.duration;
-
-      if (!isPlaying && durationVal > 0 && currentTimeVal >= durationVal * 0.99) {
-        if (nextVideo && !showNextVideoOverlayRef.current) {
-          setShowNextVideoOverlay(true);
-          setCountdown(AUTO_PLAY_COUNTDOWN);
-        }
       }
     });
 

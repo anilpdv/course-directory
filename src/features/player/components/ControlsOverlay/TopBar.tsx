@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { IconButton, Text } from 'react-native-paper';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { PlaybackRateChip, FullscreenButton } from '../PlayerControls';
-import { colors } from '@shared/theme/colors';
+import { colors, iconSizes, fontWeights } from '@shared/theme';
 
 interface TopBarProps {
   videoName: string;
@@ -32,7 +32,7 @@ export function TopBar({
       <IconButton
         icon="close"
         iconColor={colors.playerIcon}
-        size={24}
+        size={iconSizes.lg}
         onPress={onClose}
         style={styles.closeButton}
       />
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     color: colors.playerText,
     textAlign: 'center',
     marginHorizontal: 16,
-    fontWeight: '600',
+    fontWeight: fontWeights.semibold,
   },
   rightControls: {
     flexDirection: 'row',

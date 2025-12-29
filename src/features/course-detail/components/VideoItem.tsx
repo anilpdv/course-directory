@@ -4,7 +4,7 @@ import { Text, ProgressBar, Icon, IconButton, useTheme } from 'react-native-pape
 import { Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { formatTime } from '@shared/utils/formatters';
-import { spacing, borderRadius } from '@shared/theme';
+import { spacing, borderRadius, progressBarHeights } from '@shared/theme';
 
 interface VideoItemProps {
   video: Video;
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   progressBar: {
-    height: 3,
+    height: progressBarHeights.thin,
     borderRadius: borderRadius.sm,
     width: '60%',
   },

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Pressable, StyleSheet, LayoutChangeEvent, GestureResponderEvent } from 'react-native';
 import { useTheme } from 'react-native-paper';
-import { colors } from '@shared/theme/colors';
+import { colors, progressBarHeights } from '@shared/theme';
 
 interface ProgressBarProps {
   progress: number; // 0-1
@@ -100,14 +100,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   track: {
-    height: 6,
-    borderRadius: 3,
+    height: progressBarHeights.thick,
+    borderRadius: progressBarHeights.thick / 2,
     backgroundColor: colors.progressTrack,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: progressBarHeights.thick / 2,
   },
   thumb: {
     position: 'absolute',

@@ -14,6 +14,7 @@ import {
 import { Tag } from '@shared/types';
 import { useTags } from '@shared/contexts/TagsContext';
 import { spacing } from '@shared/theme';
+import { withCount } from '@shared/utils';
 import { TagEditor } from './TagEditor';
 
 interface TagListProps {
@@ -42,7 +43,7 @@ export function TagList({ visible, onDismiss }: TagListProps) {
     const courseCount = getCoursesForTag(tag.id).length;
     const message =
       courseCount > 0
-        ? `This tag is used by ${courseCount} course${courseCount !== 1 ? 's' : ''}. Are you sure you want to delete it?`
+        ? `This tag is used by ${withCount(courseCount, 'course')}. Are you sure you want to delete it?`
         : 'Are you sure you want to delete this tag?';
 
     Alert.alert('Delete Tag', message, [
@@ -69,7 +70,7 @@ export function TagList({ visible, onDismiss }: TagListProps) {
     return (
       <List.Item
         title={tag.name}
-        description={`${courseCount} course${courseCount !== 1 ? 's' : ''}`}
+        description={withCount(courseCount, 'course')}
         left={() => (
           <View
             style={[styles.colorIndicator, { backgroundColor: tag.color }]}

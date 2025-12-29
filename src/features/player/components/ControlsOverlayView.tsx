@@ -1,15 +1,15 @@
-import React from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
-import { VideoPlayer } from 'expo-video';
+import React, { memo } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { Video } from '@shared/types';
-import { VideoContainer } from '../components/VideoContainer';
-import { ControlsOverlayView } from '../components/ControlsOverlayView';
+import { TopBar, CenterControls, BottomBar } from './ControlsOverlay';
+import { NextVideoOverlay } from './NextVideoOverlay';
 import { colors } from '@shared/theme/colors';
 
-interface FullscreenLayoutProps {
-  player: VideoPlayer;
+interface ControlsOverlayViewProps {
+  // Display
   videoName: string;
+  isFullscreen: boolean;
   insets: EdgeInsets;
   // Playback state
   isPlaying: boolean;
@@ -17,14 +17,12 @@ interface FullscreenLayoutProps {
   currentTime: number;
   duration: number;
   progressPercent: number;
-  // Controls state
-  isControlsVisible: boolean;
   // Auto-play state
   showNextVideoOverlay: boolean;
   countdown: number;
   nextVideo: Video | null;
   // Handlers
-  onToggleControls: () => void;
+  onClose: () => void;
   onPlayPause: () => void;
   onPlaybackRateChange: () => void;
   onSeek: (progress: number) => void;
@@ -33,25 +31,23 @@ interface FullscreenLayoutProps {
   onSeekBackward: () => void;
   onSeekForward: () => void;
   onToggleFullscreen: () => void;
-  onClose: () => void;
   onPlayNext: () => void;
   onCancelAutoPlay: () => void;
 }
 
-export function FullscreenLayout({
-  player,
+export const ControlsOverlayView = memo(function ControlsOverlayView({
   videoName,
+  isFullscreen,
   insets,
   isPlaying,
   playbackRate,
   currentTime,
   duration,
   progressPercent,
-  isControlsVisible,
   showNextVideoOverlay,
   countdown,
   nextVideo,
-  onToggleControls,
+  onClose,
   onPlayPause,
   onPlaybackRateChange,
   onSeek,
@@ -60,49 +56,59 @@ export function FullscreenLayout({
   onSeekBackward,
   onSeekForward,
   onToggleFullscreen,
-  onClose,
   onPlayNext,
   onCancelAutoPlay,
-}: FullscreenLayoutProps) {
+}: ControlsOverlayViewProps) {
   return (
-    <View style={styles.container}>
-      <StatusBar hidden />
-
-      <VideoContainer player={player} isFullscreen onPress={onToggleControls} />
-
-      {isControlsVisible && (
-        <ControlsOverlayView
+    <>
+      <View style={styles.overlay}>
+        <TopBar
           videoName={videoName}
-          isFullscreen
-          insets={insets}
-          isPlaying={isPlaying}
           playbackRate={playbackRate}
+          isFullscreen={isFullscreen}
+          insets={insets}
+          onClose={onClose}
+          onPlaybackRateChange={onPlaybackRateChange}
+          onToggleFullscreen={onToggleFullscreen}
+        />
+
+        <CenterControls
+          isPlaying={isPlaying}
+          onPlayPause={onPlayPause}
+          onSeekBackward={onSeekBackward}
+          onSeekForward={onSeekForward}
+          size={isFullscreen ? 'large' : 'normal'}
+        />
+
+        <BottomBar
           currentTime={currentTime}
           duration={duration}
-          progressPercent={progressPercent}
-          showNextVideoOverlay={showNextVideoOverlay}
-          countdown={countdown}
-          nextVideo={nextVideo}
-          onClose={onClose}
-          onPlayPause={onPlayPause}
-          onPlaybackRateChange={onPlaybackRateChange}
+          progress={progressPercent}
+          insets={insets}
+          isFullscreen={isFullscreen}
           onSeek={onSeek}
           onSeekStart={onSeekStart}
           onSeekEnd={onSeekEnd}
-          onSeekBackward={onSeekBackward}
-          onSeekForward={onSeekForward}
-          onToggleFullscreen={onToggleFullscreen}
+        />
+      </View>
+
+      {showNextVideoOverlay && nextVideo && (
+        <NextVideoOverlay
+          countdown={countdown}
+          insets={insets}
+          isFullscreen={isFullscreen}
           onPlayNext={onPlayNext}
-          onCancelAutoPlay={onCancelAutoPlay}
+          onCancel={onCancelAutoPlay}
         />
       )}
-    </View>
+    </>
   );
-}
+});
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.playerBackground,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.controlsOverlay,
+    justifyContent: 'space-between',
   },
 });

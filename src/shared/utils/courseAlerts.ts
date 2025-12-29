@@ -4,6 +4,7 @@
  */
 
 import { Alert } from 'react-native';
+import { pluralize, withCount } from './pluralize';
 
 export interface AddCoursesResult {
   added: number;
@@ -69,10 +70,9 @@ export function handleMultipleCoursesResult(result: AddCoursesResult): void {
   }
 
   if (result.added > 0) {
-    const courseText = result.added !== 1 ? 'courses' : 'course';
     const duplicateText = result.duplicates > 0
-      ? ` ${result.duplicates} duplicate${result.duplicates !== 1 ? 's' : ''} skipped.`
+      ? ` ${withCount(result.duplicates, 'duplicate')} skipped.`
       : '';
-    Alert.alert('Courses Added', `Added ${result.added} ${courseText}.${duplicateText}`);
+    Alert.alert('Courses Added', `Added ${withCount(result.added, 'course')}.${duplicateText}`);
   }
 }

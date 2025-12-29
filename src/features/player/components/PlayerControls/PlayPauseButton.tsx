@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
-import { colors } from '@shared/theme';
+import { colors, buttonSizes, iconSizes } from '@shared/theme';
 
 interface PlayPauseButtonProps {
   isPlaying: boolean;
@@ -11,7 +11,7 @@ interface PlayPauseButtonProps {
 
 export function PlayPauseButton({ isPlaying, onPress, size = 'large' }: PlayPauseButtonProps) {
   const theme = useTheme();
-  const iconSize = size === 'large' ? 48 : 40;
+  const iconSize = size === 'large' ? iconSizes.xxl : 40;
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (
@@ -27,13 +27,13 @@ export function PlayPauseButton({ isPlaying, onPress, size = 'large' }: PlayPaus
 
 const styles = StyleSheet.create({
   largeButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: buttonSizes.large.width,
+    height: buttonSizes.large.height,
+    borderRadius: buttonSizes.large.borderRadius,
   },
   normalButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: buttonSizes.normal.width,
+    height: buttonSizes.normal.height,
+    borderRadius: buttonSizes.normal.borderRadius,
   },
 });

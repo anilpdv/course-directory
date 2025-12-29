@@ -6,6 +6,7 @@ import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
 import { TagChip, TagSelector } from '@features/tags';
 import { spacing, borderRadius, shadows } from '@shared/theme';
+import { withCount } from '@shared/utils';
 
 interface CourseCardProps {
   course: Course;
@@ -63,7 +64,7 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
                   variant="bodySmall"
                   style={{ color: theme.colors.onSurfaceVariant }}
                 >
-                  {course.sections.length} section{course.sections.length !== 1 ? 's' : ''}
+                  {withCount(course.sections.length, 'section')}
                 </Text>
                 <Text style={[styles.dot, { color: theme.colors.onSurfaceVariant }]}>
                   •
@@ -72,7 +73,7 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
                   variant="bodySmall"
                   style={{ color: theme.colors.onSurfaceVariant }}
                 >
-                  {course.totalVideos} video{course.totalVideos !== 1 ? 's' : ''}
+                  {withCount(course.totalVideos, 'video')}
                 </Text>
               </View>
               {courseTags.length > 0 && (

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, Icon, useTheme, FAB, IconButton, Badge } from 'react-native-paper';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { Course } from '@shared/types';
-import { handleSingleCourseResult, handleMultipleCoursesResult } from '@shared/utils/courseAlerts';
+import { handleSingleCourseResult, handleMultipleCoursesResult, withCount } from '@shared/utils';
 import { CourseCard } from '../components/CourseCard';
 import { CourseCardSkeleton } from '../components/CourseCardSkeleton';
 import { EmptyCoursesView } from '../components/EmptyCoursesView';
@@ -136,7 +136,7 @@ export function CoursesListScreen() {
       <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
         {hasActiveFilters
           ? `${filteredCourses.length} of ${courses.length} courses`
-          : `${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
+          : `${withCount(courses.length, 'course')} in your library`}
       </Text>
       <View style={styles.filterButtonContainer}>
         <IconButton

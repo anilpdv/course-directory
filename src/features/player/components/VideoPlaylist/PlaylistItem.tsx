@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text, IconButton, Icon, useTheme } from 'react-native-paper';
 import { Video, VideoProgress } from '@shared/types';
+import { progressBarHeights, fontWeights } from '@shared/theme';
 
 interface PlaylistItemProps {
   video: Video;
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   number: {
-    fontWeight: '500',
+    fontWeight: fontWeights.medium,
   },
   badge: {
     width: 24,
@@ -121,13 +122,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   progressBar: {
-    height: 3,
-    borderRadius: 1.5,
+    height: progressBarHeights.thin,
+    borderRadius: progressBarHeights.thin / 2,
     width: '60%',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: progressBarHeights.thin / 2,
   },
 });
 
