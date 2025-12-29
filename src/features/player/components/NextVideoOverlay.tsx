@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, IconButton } from 'react-native-paper';
 import { EdgeInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ interface NextVideoOverlayProps {
   onCancel: () => void;
 }
 
-export function NextVideoOverlay({
+function NextVideoOverlayComponent({
   countdown,
   insets,
   isFullscreen,
@@ -59,3 +59,6 @@ const styles = StyleSheet.create({
     margin: 0,
   },
 });
+
+// Memoize to prevent unnecessary re-renders
+export const NextVideoOverlay = memo(NextVideoOverlayComponent);

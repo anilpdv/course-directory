@@ -68,27 +68,6 @@ export function useAutoPlayNext({
     };
   }, [player, nextVideo]);
 
-  // Track time to show "Up Next" when 5 seconds remaining
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentTimeVal = player.currentTime;
-      const durationVal = player.duration;
-
-      if (durationVal > 0) {
-        const timeRemaining = durationVal - currentTimeVal;
-
-        if (timeRemaining <= 5 && timeRemaining > 0 && nextVideo && !showNextVideoOverlayRef.current) {
-          setShowNextVideoOverlay(true);
-          setCountdown(Math.ceil(timeRemaining));
-        }
-      }
-    }, 250);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [player, nextVideo]);
-
   // Countdown timer for auto-play
   useEffect(() => {
     if (showNextVideoOverlay) {

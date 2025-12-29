@@ -294,17 +294,30 @@ class FileSystemService {
     try {
       const courseDir = new Directory(storedCourse.folderPath);
       if (!courseDir.exists) {
+        console.warn(`Course folder not found: "${storedCourse.name}" - it may have been moved or deleted`);
         return null;
       }
 
       const course = await this.scanCourseDirectory(courseDir, storedCourse.name);
+
+      // If course has no videos, it likely had a permission error
+      if (course.totalVideos === 0) {
+        return null;
+      }
+
       // Use stored ID and icon for consistency
       course.id = storedCourse.id;
       course.name = storedCourse.name;
       course.icon = storedCourse.icon;
       return course;
     } catch (error) {
-      console.error(`Error scanning course ${storedCourse.name}:`, error);
+      // Handle permission errors gracefully
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('permission')) {
+        console.warn(`Permission denied for "${storedCourse.name}" - folder may need to be re-added`);
+      } else {
+        console.error(`Error scanning course "${storedCourse.name}":`, error);
+      }
       return null;
     }
   }
@@ -356,7 +369,23 @@ class FileSystemService {
     const sections: Section[] = [];
     let totalVideos = 0;
 
-    const contents = courseDir.list();
+    // Handle permission errors gracefully - folder access may be revoked
+    let contents: (File | Directory)[];
+    try {
+      contents = courseDir.list();
+    } catch (error) {
+      console.warn(`Permission denied for course "${courseName}" - folder may need to be re-added`);
+      // Return empty course - will be filtered out by scanAllCourses
+      return {
+        id: this.generateId(courseDir.uri),
+        name: courseName,
+        folderPath: courseDir.uri,
+        sections: [],
+        totalVideos: 0,
+        icon: getRandomCourseIcon(),
+      };
+    }
+
     const sortedContents = contents.sort((a, b) => {
       const orderA = this.extractOrder(this.getItemName(a));
       const orderB = this.extractOrder(this.getItemName(b));

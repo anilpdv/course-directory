@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Card, Text, ProgressBar, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
 import { Course } from '@shared/types';
@@ -8,12 +8,12 @@ import { TagChip, TagSelector } from '@features/tags';
 
 interface CourseCardProps {
   course: Course;
-  onPress: () => void;
+  onPress: (course: Course) => void;
   onRemove?: (courseId: string) => void;
   isTablet?: boolean;
 }
 
-export function CourseCard({ course, onPress, onRemove, isTablet }: CourseCardProps) {
+function CourseCardComponent({ course, onPress, onRemove, isTablet }: CourseCardProps) {
   const theme = useTheme();
   const { getCourseProgress } = useProgress();
   const { getTagsForCourse } = useTags();
@@ -29,7 +29,7 @@ export function CourseCard({ course, onPress, onRemove, isTablet }: CourseCardPr
     <>
     <Card
       style={[styles.card, isTablet && styles.cardTablet, { backgroundColor: theme.colors.surface }]}
-      onPress={onPress}
+      onPress={() => onPress(course)}
       mode="elevated"
     >
       <Card.Content style={styles.content}>
@@ -227,4 +227,16 @@ const styles = StyleSheet.create({
   menuButton: {
     margin: -4,
   },
+});
+
+// Memoize to prevent unnecessary re-renders in FlatList
+export const CourseCard = memo(CourseCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.course.id === nextProps.course.id &&
+    prevProps.course.totalVideos === nextProps.course.totalVideos &&
+    prevProps.course.sections.length === nextProps.course.sections.length &&
+    prevProps.isTablet === nextProps.isTablet &&
+    prevProps.onPress === nextProps.onPress &&
+    prevProps.onRemove === nextProps.onRemove
+  );
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { List, Text, ProgressBar, Icon, IconButton, useTheme } from 'react-native-paper';
 import { Video } from '@shared/types';
@@ -10,7 +10,7 @@ interface VideoItemProps {
   onPress: () => void;
 }
 
-export function VideoItem({ video, onPress }: VideoItemProps) {
+function VideoItemComponent({ video, onPress }: VideoItemProps) {
   const theme = useTheme();
   const { getVideoProgress } = useProgress();
   const progress = getVideoProgress(video.id);
@@ -104,4 +104,14 @@ const styles = StyleSheet.create({
   playButton: {
     margin: 0,
   },
+});
+
+// Memoize to prevent unnecessary re-renders
+// Note: This component uses useProgress hook internally, so it will still
+// re-render when progress changes, but this prevents re-renders from parent updates
+export const VideoItem = memo(VideoItemComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.video.id === nextProps.video.id &&
+    prevProps.onPress === nextProps.onPress
+  );
 });

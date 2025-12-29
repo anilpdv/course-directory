@@ -1,10 +1,14 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { Video, VideoProgress } from '@shared/types';
 import { CurrentVideoInfo } from './CurrentVideoInfo';
 import { PlaylistItem } from './PlaylistItem';
+
+// Height of each playlist item for getItemLayout optimization
+const ITEM_HEIGHT = 72; // container padding (24) + content (~48)
+const HEADER_HEIGHT = 40; // "Up Next" header
 
 interface VideoPlaylistProps {
   videoName: string;
@@ -27,6 +31,53 @@ export function VideoPlaylist({
 }: VideoPlaylistProps) {
   const theme = useTheme();
 
+  // Memoized render function for each item
+  const renderItem = useCallback(
+    ({ item, index }: { item: Video; index: number }) => (
+      <PlaylistItem
+        video={item}
+        index={index}
+        isCurrentVideo={item.id === currentVideoId}
+        progress={getVideoProgress(item.id)}
+        onSelect={onVideoSelect}
+      />
+    ),
+    [currentVideoId, getVideoProgress, onVideoSelect]
+  );
+
+  // Stable key extractor
+  const keyExtractor = useCallback((item: Video) => item.id, []);
+
+  // Optimize scroll performance with known item heights
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index + HEADER_HEIGHT,
+      index,
+    }),
+    []
+  );
+
+  // Calculate initial scroll position to show current video
+  const initialScrollIndex = useMemo(() => {
+    const idx = videos.findIndex(v => v.id === currentVideoId);
+    // Show 2 videos before current if possible
+    return Math.max(0, idx - 2);
+  }, [videos, currentVideoId]);
+
+  // List header component
+  const ListHeader = useMemo(
+    () => (
+      <Text
+        variant="titleSmall"
+        style={[styles.header, { color: theme.colors.onSurfaceVariant }]}
+      >
+        Up Next
+      </Text>
+    ),
+    [theme.colors.onSurfaceVariant]
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <CurrentVideoInfo
@@ -35,27 +86,22 @@ export function VideoPlaylist({
         totalVideos={videos.length}
       />
 
-      <ScrollView
+      <FlatList
+        data={videos}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        initialScrollIndex={videos.length > 0 ? initialScrollIndex : undefined}
+        ListHeaderComponent={ListHeader}
         style={styles.list}
         contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
-      >
-        <Text
-          variant="titleSmall"
-          style={[styles.header, { color: theme.colors.onSurfaceVariant }]}
-        >
-          Up Next
-        </Text>
-        {videos.map((video, index) => (
-          <PlaylistItem
-            key={video.id}
-            video={video}
-            index={index}
-            isCurrentVideo={video.id === currentVideoId}
-            progress={getVideoProgress(video.id)}
-            onSelect={onVideoSelect}
-          />
-        ))}
-      </ScrollView>
+        // Performance optimizations
+        windowSize={5}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
+        initialNumToRender={15}
+      />
     </View>
   );
 }

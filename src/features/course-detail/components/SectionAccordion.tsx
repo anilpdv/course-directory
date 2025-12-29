@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { List, Text, ProgressBar, Icon, useTheme } from 'react-native-paper';
 import { Section, Video } from '@shared/types';
@@ -16,7 +16,7 @@ interface SectionAccordionProps {
   defaultExpanded?: boolean;
 }
 
-export function SectionAccordion({
+function SectionAccordionComponent({
   section,
   onVideoPress,
   defaultExpanded = false,
@@ -100,6 +100,16 @@ export function SectionAccordion({
     </View>
   );
 }
+
+// Memoize to prevent unnecessary re-renders
+export const SectionAccordion = memo(SectionAccordionComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.section.id === nextProps.section.id &&
+    prevProps.section.videos.length === nextProps.section.videos.length &&
+    prevProps.defaultExpanded === nextProps.defaultExpanded &&
+    prevProps.onVideoPress === nextProps.onVideoPress
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

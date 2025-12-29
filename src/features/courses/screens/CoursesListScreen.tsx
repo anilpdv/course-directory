@@ -145,13 +145,16 @@ export function CoursesListScreen() {
     ({ item }: { item: Course }) => (
       <CourseCard
         course={item}
-        onPress={() => handleCoursePress(item)}
+        onPress={handleCoursePress}
         onRemove={handleRemoveCourse}
         isTablet={isTablet}
       />
     ),
     [handleCoursePress, handleRemoveCourse, isTablet]
   );
+
+  // Stable key extractor
+  const keyExtractor = useCallback((item: Course) => item.id, []);
 
   // Welcome screen - no courses added
   if (!hasCourses) {
@@ -272,11 +275,16 @@ export function CoursesListScreen() {
           <FlatList
             key={numColumns}
             data={filteredCourses}
-            keyExtractor={(item) => item.id}
+            keyExtractor={keyExtractor}
             renderItem={renderCourse}
             numColumns={numColumns}
             columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
             ListHeaderComponent={courses.length > 0 ? renderHeader : null}
+            // Performance optimizations
+            windowSize={5}
+            maxToRenderPerBatch={10}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
             ListEmptyComponent={
               hasActiveFilters ? (
                 <View style={styles.noResultsContainer}>

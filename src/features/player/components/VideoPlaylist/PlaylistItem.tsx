@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text, IconButton, Icon, useTheme } from 'react-native-paper';
 import { Video, VideoProgress } from '@shared/types';
@@ -11,7 +11,7 @@ interface PlaylistItemProps {
   onSelect: (video: Video) => void;
 }
 
-export function PlaylistItem({
+function PlaylistItemComponent({
   video,
   index,
   isCurrentVideo,
@@ -129,4 +129,16 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 1.5,
   },
+});
+
+// Memoize with custom comparison to prevent unnecessary re-renders
+export const PlaylistItem = memo(PlaylistItemComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.video.id === nextProps.video.id &&
+    prevProps.index === nextProps.index &&
+    prevProps.isCurrentVideo === nextProps.isCurrentVideo &&
+    prevProps.progress?.percentComplete === nextProps.progress?.percentComplete &&
+    prevProps.progress?.isComplete === nextProps.progress?.isComplete &&
+    prevProps.onSelect === nextProps.onSelect
+  );
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button, Icon, useTheme } from 'react-native-paper';
 
@@ -8,7 +8,7 @@ interface EmptyCoursesViewProps {
   onAddMultipleCourses: () => void;
 }
 
-export function EmptyCoursesView({ onRescan, onAddCourse, onAddMultipleCourses }: EmptyCoursesViewProps) {
+function EmptyCoursesViewComponent({ onRescan, onAddCourse, onAddMultipleCourses }: EmptyCoursesViewProps) {
   const theme = useTheme();
 
   return (
@@ -75,3 +75,6 @@ const styles = StyleSheet.create({
     minWidth: 180,
   },
 });
+
+// Memoize to prevent unnecessary re-renders
+export const EmptyCoursesView = memo(EmptyCoursesViewComponent);
