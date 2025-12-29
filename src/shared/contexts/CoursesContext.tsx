@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo, ReactNode } from 'react';
 import { Course, CoursesState, CoursesAction, StoredCourse } from '../types';
 import { fileSystemService } from '../services/fileSystemService';
 
@@ -87,9 +87,23 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_STORED_COURSES', payload: stored });
   }, []);
 
+  // Load on mount with cleanup
   useEffect(() => {
-    loadStoredCourses();
-  }, [loadStoredCourses]);
+    let isMounted = true;
+    const load = async () => {
+      let stored = await fileSystemService.getStoredCourses();
+      if (stored.length === 0) {
+        stored = await fileSystemService.migrateFromSinglePath();
+      }
+      if (isMounted) {
+        dispatch({ type: 'SET_STORED_COURSES', payload: stored });
+      }
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Scan all stored courses
   const scanCourses = useCallback(async () => {
@@ -232,19 +246,23 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_COURSES', payload: [] });
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders in consumers
+  const contextValue = useMemo(
+    () => ({
+      state,
+      scanCourses,
+      getCourse,
+      addSingleCourse,
+      addMultipleCourses,
+      removeCourse,
+      loadStoredCourses,
+      clearAllCourses,
+    }),
+    [state, scanCourses, getCourse, addSingleCourse, addMultipleCourses, removeCourse, loadStoredCourses, clearAllCourses]
+  );
+
   return (
-    <CoursesContext.Provider
-      value={{
-        state,
-        scanCourses,
-        getCourse,
-        addSingleCourse,
-        addMultipleCourses,
-        removeCourse,
-        loadStoredCourses,
-        clearAllCourses,
-      }}
-    >
+    <CoursesContext.Provider value={contextValue}>
       {children}
     </CoursesContext.Provider>
   );

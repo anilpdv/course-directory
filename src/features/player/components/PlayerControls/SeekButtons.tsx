@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
-import { colors } from '@shared/theme/colors';
+import { colors } from '@shared/theme';
 
 interface SeekButtonsProps {
   onSeekBackward: () => void;
@@ -16,10 +16,10 @@ export function SeekButtons({ onSeekBackward, onSeekForward, size = 'large' }: S
   return (
     <>
       <Pressable style={buttonStyle} onPress={onSeekBackward}>
-        <IconButton icon="rewind-10" iconColor="#FFFFFF" size={iconSize} />
+        <IconButton icon="rewind-10" iconColor={colors.playerIcon} size={iconSize} />
       </Pressable>
       <Pressable style={buttonStyle} onPress={onSeekForward}>
-        <IconButton icon="fast-forward-10" iconColor="#FFFFFF" size={iconSize} />
+        <IconButton icon="fast-forward-10" iconColor={colors.playerIcon} size={iconSize} />
       </Pressable>
     </>
   );
@@ -37,7 +37,7 @@ export function SeekBackwardButton({
 
   return (
     <Pressable style={buttonStyle} onPress={onPress}>
-      <IconButton icon="rewind-10" iconColor="#FFFFFF" size={iconSize} />
+      <IconButton icon="rewind-10" iconColor={colors.playerIcon} size={iconSize} />
     </Pressable>
   );
 }
@@ -54,7 +54,7 @@ export function SeekForwardButton({
 
   return (
     <Pressable style={buttonStyle} onPress={onPress}>
-      <IconButton icon="fast-forward-10" iconColor="#FFFFFF" size={iconSize} />
+      <IconButton icon="fast-forward-10" iconColor={colors.playerIcon} size={iconSize} />
     </Pressable>
   );
 }

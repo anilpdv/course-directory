@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDeviceType } from '@shared/hooks';
 import {
   Modal,
   Portal,
@@ -29,7 +29,7 @@ export function TagSelector({
   onDismiss,
 }: TagSelectorProps) {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { isTablet } = useDeviceType();
   const { state, assignTag, unassignTag, createTag, getTagsForCourse } = useTags();
   const [editorVisible, setEditorVisible] = useState(false);
 
@@ -56,15 +56,9 @@ export function TagSelector({
       <Modal
         visible={visible}
         onDismiss={onDismiss}
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          marginTop: -insets.top,
-          marginBottom: -insets.bottom,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-        }}
         contentContainerStyle={[
           styles.modal,
+          isTablet && styles.modalTablet,
           {
             backgroundColor: theme.colors.surface,
             borderWidth: 1,
@@ -173,6 +167,11 @@ const styles = StyleSheet.create({
     margin: spacing.md,
     borderRadius: 20,
     paddingBottom: spacing.sm,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  modalTablet: {
+    width: 700,
   },
   header: {
     flexDirection: 'row',

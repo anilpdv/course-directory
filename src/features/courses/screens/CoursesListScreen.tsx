@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, Alert, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import { useDeviceType } from '@shared/hooks';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -16,8 +17,10 @@ import {
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { Course } from '@shared/types';
 import { CourseCard } from '../components/CourseCard';
+import { CourseCardSkeleton } from '../components/CourseCardSkeleton';
 import { EmptyCoursesView } from '../components/EmptyCoursesView';
 import { TagFilterDrawer, useTagFilter } from '@features/tags';
+import { spacing } from '@shared/theme';
 
 export function CoursesListScreen() {
   const router = useRouter();
@@ -27,9 +30,18 @@ export function CoursesListScreen() {
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
 
-  const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
+  const { isTablet, width } = useDeviceType();
   const numColumns = isTablet ? 3 : 1;
+
+  // Calculate fixed card width for tablet grid to prevent last row items from stretching
+  const cardWidth = useMemo(() => {
+    if (!isTablet) return undefined;
+    // columnWrapper padding: 8px each side = 16px
+    // Each card margin: spacing.sm (8px) each side = 16px per card
+    const containerPadding = spacing.sm * 2;
+    const totalCardMargins = spacing.sm * 2 * numColumns;
+    return (width - containerPadding - totalCardMargins) / numColumns;
+  }, [width, isTablet, numColumns]);
 
   const {
     selectedTagIds,
@@ -142,15 +154,17 @@ export function CoursesListScreen() {
   }, [removeCourse]);
 
   const renderCourse = useCallback(
-    ({ item }: { item: Course }) => (
+    ({ item, index }: { item: Course; index: number }) => (
       <CourseCard
         course={item}
         onPress={handleCoursePress}
         onRemove={handleRemoveCourse}
         isTablet={isTablet}
+        cardWidth={cardWidth}
+        index={index}
       />
     ),
-    [handleCoursePress, handleRemoveCourse, isTablet]
+    [handleCoursePress, handleRemoveCourse, isTablet, cardWidth]
   );
 
   // Stable key extractor
@@ -262,13 +276,17 @@ export function CoursesListScreen() {
     >
       {isLoading && courses.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text
-            variant="bodyLarge"
+            variant="bodyMedium"
             style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}
           >
             Scanning for courses...
           </Text>
+          <View style={styles.skeletonList}>
+            {[0, 1, 2, 3].map((i) => (
+              <CourseCardSkeleton key={i} isTablet={isTablet} />
+            ))}
+          </View>
         </View>
       ) : (
         <>
@@ -404,11 +422,14 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingTop: spacing.lg,
   },
   loadingText: {
-    marginTop: 16,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  skeletonList: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',

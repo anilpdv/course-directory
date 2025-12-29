@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { useDeviceType } from '@shared/hooks';
 import {
   Modal,
   Portal,
@@ -22,6 +23,7 @@ interface TagListProps {
 
 export function TagList({ visible, onDismiss }: TagListProps) {
   const theme = useTheme();
+  const { isTablet } = useDeviceType();
   const { state, createTag, updateTag, deleteTag, getCoursesForTag } = useTags();
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | undefined>(undefined);
@@ -125,6 +127,7 @@ export function TagList({ visible, onDismiss }: TagListProps) {
         onDismiss={onDismiss}
         contentContainerStyle={[
           styles.modal,
+          isTablet && styles.modalTablet,
           {
             backgroundColor: theme.colors.surface,
             borderWidth: 2,
@@ -187,6 +190,11 @@ const styles = StyleSheet.create({
     margin: spacing.md,
     borderRadius: 16,
     maxHeight: '100%',
+    width: '90%',
+    alignSelf: 'center',
+  },
+  modalTablet: {
+    width: 700,
   },
   header: {
     flexDirection: 'row',

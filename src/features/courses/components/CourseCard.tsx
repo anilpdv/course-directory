@@ -1,19 +1,22 @@
 import React, { useState, memo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, Text, ProgressBar, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
+import { Card, Text, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
 import { Course } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
 import { TagChip, TagSelector } from '@features/tags';
+import { spacing, borderRadius, shadows } from '@shared/theme';
 
 interface CourseCardProps {
   course: Course;
   onPress: (course: Course) => void;
   onRemove?: (courseId: string) => void;
   isTablet?: boolean;
+  cardWidth?: number;
+  index?: number;
 }
 
-function CourseCardComponent({ course, onPress, onRemove, isTablet }: CourseCardProps) {
+function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, index = 0 }: CourseCardProps) {
   const theme = useTheme();
   const { getCourseProgress } = useProgress();
   const { getTagsForCourse } = useTags();
@@ -27,152 +30,160 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet }: CourseCard
 
   return (
     <>
-    <Card
-      style={[styles.card, isTablet && styles.cardTablet, { backgroundColor: theme.colors.surface }]}
-      onPress={() => onPress(course)}
-      mode="elevated"
-    >
-      <Card.Content style={styles.content}>
-        <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Icon
-              source={course.icon || 'book-open-variant'}
-              size={32}
-              color={theme.colors.primary}
-            />
-          </View>
-          <View style={styles.titleContainer}>
-            <Text
-              variant="titleMedium"
-              style={[styles.title, { color: theme.colors.onSurface }]}
-              numberOfLines={2}
-            >
-              {course.name}
-            </Text>
-            <View style={styles.statsRow}>
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.onSurfaceVariant }}
-              >
-                {course.sections.length} section{course.sections.length !== 1 ? 's' : ''}
-              </Text>
-              <Text style={[styles.dot, { color: theme.colors.onSurfaceVariant }]}>
-                •
-              </Text>
-              <Text
-                variant="bodySmall"
-                style={{ color: theme.colors.onSurfaceVariant }}
-              >
-                {course.totalVideos} video{course.totalVideos !== 1 ? 's' : ''}
-              </Text>
-            </View>
-            {courseTags.length > 0 && (
-              <View style={styles.tagsRow}>
-                {courseTags.slice(0, 3).map((tag) => (
-                  <TagChip key={tag.id} tag={tag} size="small" />
-                ))}
-                {courseTags.length > 3 && (
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: theme.colors.onSurfaceVariant }}
-                  >
-                    +{courseTags.length - 3}
-                  </Text>
-                )}
-              </View>
-            )}
-          </View>
-          {isComplete && (
-            <Chip
-              mode="flat"
-              compact
-              style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}
-              textStyle={[styles.completeText, { color: theme.colors.onPrimary }]}
-            >
-              Complete
-            </Chip>
-          )}
-          <Menu
-            key={menuKey}
-            visible={menuVisible}
-            onDismiss={() => {
-              setMenuVisible(false);
-              setMenuKey(k => k + 1);
-            }}
-            anchor={
-              <IconButton
-                icon="dots-vertical"
-                size={24}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setMenuVisible(true);
-                }}
-                hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
-                style={styles.menuButton}
+      <Card
+        style={[
+          styles.card,
+          isTablet && styles.cardTablet,
+          cardWidth !== undefined && { width: cardWidth },
+          { backgroundColor: theme.colors.surface },
+          shadows.md,
+        ]}
+        onPress={() => onPress(course)}
+        mode="elevated"
+      >
+        <Card.Content style={styles.content}>
+          <View style={styles.header}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+              <Icon
+                source={course.icon || 'book-open-variant'}
+                size={32}
+                color={theme.colors.primary}
               />
-            }
-          >
-            <Menu.Item
-              leadingIcon="tag-multiple"
-              onPress={() => {
+            </View>
+            <View style={styles.titleContainer}>
+              <Text
+                variant="titleMedium"
+                style={[styles.title, { color: theme.colors.onSurface }]}
+                numberOfLines={2}
+              >
+                {course.name}
+              </Text>
+              <View style={styles.statsRow}>
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {course.sections.length} section{course.sections.length !== 1 ? 's' : ''}
+                </Text>
+                <Text style={[styles.dot, { color: theme.colors.onSurfaceVariant }]}>
+                  •
+                </Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {course.totalVideos} video{course.totalVideos !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              {courseTags.length > 0 && (
+                <View style={styles.tagsRow}>
+                  {courseTags.slice(0, 3).map((tag) => (
+                    <TagChip key={tag.id} tag={tag} size="small" />
+                  ))}
+                  {courseTags.length > 3 && (
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: theme.colors.onSurfaceVariant }}
+                    >
+                      +{courseTags.length - 3}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+            {isComplete && (
+              <Chip
+                mode="flat"
+                compact
+                style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}
+                textStyle={[styles.completeText, { color: theme.colors.onPrimary }]}
+              >
+                Complete
+              </Chip>
+            )}
+            <Menu
+              key={menuKey}
+              visible={menuVisible}
+              onDismiss={() => {
                 setMenuVisible(false);
                 setMenuKey(k => k + 1);
-                setTagSelectorVisible(true);
               }}
-              title="Manage Tags"
-            />
-            {onRemove && (
+              anchor={
+                <IconButton
+                  icon="dots-vertical"
+                  size={24}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setMenuVisible(true);
+                  }}
+                  hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                  style={styles.menuButton}
+                />
+              }
+            >
               <Menu.Item
-                leadingIcon="delete"
+                leadingIcon="tag-multiple"
                 onPress={() => {
                   setMenuVisible(false);
                   setMenuKey(k => k + 1);
-                  onRemove(course.id);
+                  setTagSelectorVisible(true);
                 }}
-                title="Remove Course"
+                title="Manage Tags"
               />
-            )}
-          </Menu>
-        </View>
+              {onRemove && (
+                <Menu.Item
+                  leadingIcon="delete"
+                  onPress={() => {
+                    setMenuVisible(false);
+                    setMenuKey(k => k + 1);
+                    onRemove(course.id);
+                  }}
+                  title="Remove Course"
+                />
+              )}
+            </Menu>
+          </View>
 
-        <View style={styles.progressSection}>
-          <ProgressBar
-            progress={progress.percent / 100}
-            color={theme.colors.primary}
-            style={styles.progressBar}
-          />
-          <Text
-            variant="labelSmall"
-            style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}
-          >
-            {progress.completed}/{progress.total} completed
-          </Text>
-        </View>
-      </Card.Content>
-    </Card>
+          <View style={styles.progressSection}>
+            <View style={[styles.progressTrack, { backgroundColor: theme.colors.surfaceVariant }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: theme.colors.primary, width: `${progress.percent}%` },
+                ]}
+              />
+            </View>
+            <Text
+              variant="labelSmall"
+              style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}
+            >
+              {progress.completed}/{progress.total} completed
+            </Text>
+          </View>
+        </Card.Content>
+      </Card>
 
-    <TagSelector
-      courseId={course.id}
-      courseName={course.name}
-      visible={tagSelectorVisible}
-      onDismiss={() => setTagSelectorVisible(false)}
-    />
+      <TagSelector
+        courseId={course.id}
+        courseName={course.name}
+        visible={tagSelectorVisible}
+        onDismiss={() => setTagSelectorVisible(false)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    borderRadius: borderRadius.xl,
   },
   cardTablet: {
-    flex: 1,
-    marginHorizontal: 8,
+    marginHorizontal: spacing.sm,
   },
   content: {
-    paddingBottom: 8,
+    paddingBottom: spacing.sm,
   },
   header: {
     flexDirection: 'row',
@@ -181,17 +192,17 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm + 4,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
@@ -199,10 +210,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dot: {
-    marginHorizontal: 6,
+    marginHorizontal: spacing.xs + 2,
   },
   completeBadge: {
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   completeText: {
     fontSize: 11,
@@ -211,21 +222,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
+    gap: spacing.xs + 2,
+    marginTop: spacing.sm,
   },
   progressSection: {
-    marginTop: 16,
+    marginTop: spacing.md,
   },
-  progressBar: {
+  progressTrack: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: borderRadius.sm,
   },
   progressText: {
-    marginTop: 6,
+    marginTop: spacing.xs + 2,
   },
   menuButton: {
-    margin: -4,
+    margin: -spacing.xs,
   },
 });
 
@@ -236,6 +252,8 @@ export const CourseCard = memo(CourseCardComponent, (prevProps, nextProps) => {
     prevProps.course.totalVideos === nextProps.course.totalVideos &&
     prevProps.course.sections.length === nextProps.course.sections.length &&
     prevProps.isTablet === nextProps.isTablet &&
+    prevProps.cardWidth === nextProps.cardWidth &&
+    prevProps.index === nextProps.index &&
     prevProps.onPress === nextProps.onPress &&
     prevProps.onRemove === nextProps.onRemove
   );

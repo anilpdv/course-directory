@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, IconButton } from 'react-native-paper';
 import { EdgeInsets } from 'react-native-safe-area-context';
+import { colors } from '@shared/theme';
 
 interface NextVideoOverlayProps {
   countdown: number;
@@ -36,7 +37,7 @@ function NextVideoOverlayComponent({
       <IconButton
         icon="close"
         size={isFullscreen ? 20 : 18}
-        iconColor="#FFFFFF"
+        iconColor={colors.playerIcon}
         onPress={onCancel}
         style={styles.cancelButton}
       />

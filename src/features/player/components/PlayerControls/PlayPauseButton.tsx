@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
+import { colors } from '@shared/theme';
 
 interface PlayPauseButtonProps {
   isPlaying: boolean;
@@ -16,7 +17,7 @@ export function PlayPauseButton({ isPlaying, onPress, size = 'large' }: PlayPaus
   return (
     <IconButton
       icon={isPlaying ? 'pause' : 'play'}
-      iconColor="#FFFFFF"
+      iconColor={colors.playerIcon}
       size={iconSize}
       onPress={onPress}
       style={[buttonStyle, { backgroundColor: theme.colors.primary }]}

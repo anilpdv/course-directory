@@ -20,7 +20,7 @@ import { FullscreenLayout } from '../layouts/FullscreenLayout';
 import { PortraitLayout } from '../layouts/PortraitLayout';
 
 export function VideoPlayerScreen() {
-  const params = useLocalSearchParams<VideoPlayerParams>();
+  const params = useLocalSearchParams() as unknown as VideoPlayerParams;
   const insets = useSafeAreaInsets();
   const { updateVideoProgress, getVideoProgress } = useProgress();
 

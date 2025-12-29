@@ -31,7 +31,7 @@ export function TopBar({
     <View style={[styles.container, { paddingLeft, paddingRight }]}>
       <IconButton
         icon="close"
-        iconColor="#FFFFFF"
+        iconColor={colors.playerIcon}
         size={24}
         onPress={onClose}
         style={styles.closeButton}
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.playerText,
     textAlign: 'center',
     marginHorizontal: 16,
     fontWeight: '600',

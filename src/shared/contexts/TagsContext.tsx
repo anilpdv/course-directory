@@ -4,6 +4,8 @@ import React, {
   useReducer,
   useCallback,
   useEffect,
+  useRef,
+  useMemo,
   ReactNode,
 } from 'react';
 import { Tag, TagsState, TagsAction } from '../types';
@@ -118,30 +120,60 @@ const TagsContext = createContext<TagsContextType | undefined>(undefined);
 export function TagsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(tagsReducer, initialState);
 
-  // Load tags from storage on mount
+  // Refs for debounced save timeouts
+  const saveTagsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveCourseTagsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load tags from storage on mount (with cleanup)
   useEffect(() => {
+    let isMounted = true;
     const loadTags = async () => {
       const [tags, courseTags] = await Promise.all([
         storageService.getTags(),
         storageService.getCourseTags(),
       ]);
-      dispatch({ type: 'LOAD_TAGS', payload: { tags, courseTags } });
+      if (isMounted) {
+        dispatch({ type: 'LOAD_TAGS', payload: { tags, courseTags } });
+      }
     };
     loadTags();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Save tags to storage whenever they change
+  // Save tags to storage with debounce (reduces battery drain)
   useEffect(() => {
     if (state.isLoaded) {
-      storageService.saveTags(state.tags);
+      if (saveTagsTimeoutRef.current) {
+        clearTimeout(saveTagsTimeoutRef.current);
+      }
+      saveTagsTimeoutRef.current = setTimeout(() => {
+        storageService.saveTags(state.tags);
+      }, 2000); // 2 second debounce
     }
+    return () => {
+      if (saveTagsTimeoutRef.current) {
+        clearTimeout(saveTagsTimeoutRef.current);
+      }
+    };
   }, [state.tags, state.isLoaded]);
 
-  // Save course-tag mappings whenever they change
+  // Save course-tag mappings with debounce
   useEffect(() => {
     if (state.isLoaded) {
-      storageService.saveCourseTags(state.courseTags);
+      if (saveCourseTagsTimeoutRef.current) {
+        clearTimeout(saveCourseTagsTimeoutRef.current);
+      }
+      saveCourseTagsTimeoutRef.current = setTimeout(() => {
+        storageService.saveCourseTags(state.courseTags);
+      }, 2000); // 2 second debounce
     }
+    return () => {
+      if (saveCourseTagsTimeoutRef.current) {
+        clearTimeout(saveCourseTagsTimeoutRef.current);
+      }
+    };
   }, [state.courseTags, state.isLoaded]);
 
   const createTag = useCallback(
@@ -218,22 +250,38 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     await storageService.clearTagsData();
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders in consumers
+  const contextValue = useMemo(
+    () => ({
+      state,
+      createTag,
+      updateTag,
+      deleteTag,
+      assignTag,
+      unassignTag,
+      setCourseTags,
+      getTagsForCourse,
+      getCoursesForTag,
+      getTagById,
+      clearAllTags,
+    }),
+    [
+      state,
+      createTag,
+      updateTag,
+      deleteTag,
+      assignTag,
+      unassignTag,
+      setCourseTags,
+      getTagsForCourse,
+      getCoursesForTag,
+      getTagById,
+      clearAllTags,
+    ]
+  );
+
   return (
-    <TagsContext.Provider
-      value={{
-        state,
-        createTag,
-        updateTag,
-        deleteTag,
-        assignTag,
-        unassignTag,
-        setCourseTags,
-        getTagsForCourse,
-        getCoursesForTag,
-        getTagById,
-        clearAllTags,
-      }}
-    >
+    <TagsContext.Provider value={contextValue}>
       {children}
     </TagsContext.Provider>
   );

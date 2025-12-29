@@ -41,6 +41,8 @@ export const colors = {
   controlButton: 'rgba(255, 255, 255, 0.2)',
   seekButton: 'rgba(255, 255, 255, 0.15)',
   progressTrack: 'rgba(255, 255, 255, 0.3)',
+  playerIcon: '#FFFFFF',
+  playerText: '#FFFFFF',
 };
 
 export type ThemeColors = typeof colors;

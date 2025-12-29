@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.controlButton,
   },
   text: {
-    color: '#FFFFFF',
+    color: colors.playerText,
     fontSize: 14,
     fontWeight: '600',
   },

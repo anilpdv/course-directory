@@ -15,6 +15,27 @@ import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
 import { TagList } from '@features/tags';
+import { spacing, borderRadius, shadows } from '@shared/theme';
+
+interface SettingsSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function SettingsSection({ title, children }: SettingsSectionProps) {
+  const theme = useTheme();
+
+  return (
+    <View style={styles.section}>
+      <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+        {title}
+      </Text>
+      <Surface style={[styles.card, { backgroundColor: theme.colors.surface }, shadows.sm]} elevation={0}>
+        {children}
+      </Surface>
+    </View>
+  );
+}
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -145,164 +166,139 @@ export function SettingsScreen() {
     >
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Courses Section */}
-        <View style={styles.section}>
-          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            Courses
-          </Text>
-          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <List.Item
-              title="Your Library"
-              description={`${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="book-multiple" size={22} color={theme.colors.primary} />
-                </View>
-              )}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
-            />
-            <View style={styles.buttonRow}>
-              <Button mode="contained" onPress={handleAddSingleCourse} style={styles.actionButton}>
-                Add Course
-              </Button>
-              <Button mode="outlined" onPress={handleAddMultipleCourses} style={styles.actionButton}>
-                Add Multiple
-              </Button>
-              <Button mode="outlined" onPress={handleRescan} style={styles.actionButton}>
-                Rescan
-              </Button>
-            </View>
-          </Surface>
-        </View>
+        <SettingsSection title="Courses">
+          <List.Item
+            title="Your Library"
+            description={`${courses.length} course${courses.length !== 1 ? 's' : ''} in your library`}
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="book-multiple" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+          />
+          <View style={styles.buttonRow}>
+            <Button mode="contained" onPress={handleAddSingleCourse} style={styles.actionButton}>
+              Add Course
+            </Button>
+            <Button mode="outlined" onPress={handleAddMultipleCourses} style={styles.actionButton}>
+              Add Multiple
+            </Button>
+            <Button mode="outlined" onPress={handleRescan} style={styles.actionButton}>
+              Rescan
+            </Button>
+          </View>
+        </SettingsSection>
 
         {/* Tags Section */}
-        <View style={styles.section}>
-          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            Tags
-          </Text>
-          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <List.Item
-              title="Manage Tags"
-              description={`${tagCount} tag${tagCount !== 1 ? 's' : ''} created`}
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="tag-multiple" size={22} color={theme.colors.primary} />
-                </View>
-              )}
-              right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
-              onPress={() => setTagListVisible(true)}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
-            />
-          </Surface>
-        </View>
+        <SettingsSection title="Tags">
+          <List.Item
+            title="Manage Tags"
+            description={`${tagCount} tag${tagCount !== 1 ? 's' : ''} created`}
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="tag-multiple" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
+            onPress={() => setTagListVisible(true)}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+          />
+        </SettingsSection>
 
         {/* Data Management Section */}
-        <View style={styles.section}>
-          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            Data Management
-          </Text>
-          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <List.Item
-              title="Watch Progress"
-              description={`${progressCount} video${progressCount !== 1 ? 's' : ''} tracked`}
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="chart-line" size={22} color={theme.colors.primary} />
-                </View>
-              )}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            />
-            <View style={styles.buttonRowEnd}>
-              <Button
-                mode="contained"
-                onPress={handleClearProgress}
-                disabled={isClearing || progressCount === 0}
-                loading={isClearing}
-                buttonColor={theme.colors.error}
-              >
-                Clear Progress
-              </Button>
-            </View>
-            <Divider style={{ marginHorizontal: 16 }} />
-            <List.Item
-              title="All App Data"
-              description="Courses, tags, progress, and settings"
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="database-remove" size={22} color={theme.colors.error} />
-                </View>
-              )}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            />
-            <View style={styles.buttonRowEnd}>
-              <Button
-                mode="contained"
-                onPress={handleDeleteAllData}
-                disabled={isDeleting}
-                loading={isDeleting}
-                buttonColor={theme.colors.error}
-              >
-                Delete All Data
-              </Button>
-            </View>
-          </Surface>
-        </View>
+        <SettingsSection title="Data Management">
+          <List.Item
+            title="Watch Progress"
+            description={`${progressCount} video${progressCount !== 1 ? 's' : ''} tracked`}
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="chart-line" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+          />
+          <View style={styles.buttonRowEnd}>
+            <Button
+              mode="contained"
+              onPress={handleClearProgress}
+              disabled={isClearing || progressCount === 0}
+              loading={isClearing}
+              buttonColor={theme.colors.error}
+            >
+              Clear Progress
+            </Button>
+          </View>
+          <Divider style={{ marginHorizontal: spacing.md }} />
+          <List.Item
+            title="All App Data"
+            description="Courses, tags, progress, and settings"
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="database-remove" size={22} color={theme.colors.error} />
+              </View>
+            )}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+          />
+          <View style={styles.buttonRowEnd}>
+            <Button
+              mode="contained"
+              onPress={handleDeleteAllData}
+              disabled={isDeleting}
+              loading={isDeleting}
+              buttonColor={theme.colors.error}
+            >
+              Delete All Data
+            </Button>
+          </View>
+        </SettingsSection>
 
         {/* About Section */}
-        <View style={styles.section}>
-          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            About
-          </Text>
-          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <List.Item
-              title="CourseViewer"
-              description="Offline video course player with progress tracking"
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="play-circle" size={22} color={theme.colors.primary} />
-                </View>
-              )}
-              right={() => (
-                <View style={[styles.versionBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    v1.0.0
-                  </Text>
-                </View>
-              )}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            />
-          </Surface>
-        </View>
+        <SettingsSection title="About">
+          <List.Item
+            title="CourseViewer"
+            description="Offline video course player with progress tracking"
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="play-circle" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            right={() => (
+              <View style={[styles.versionBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  v1.0.0
+                </Text>
+              </View>
+            )}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+          />
+        </SettingsSection>
 
         {/* Supported Formats Section */}
-        <View style={styles.section}>
-          <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-            Supported Formats
-          </Text>
-          <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <List.Item
-              title="Video Files"
-              description="MP4, MOV, M4V"
-              left={() => (
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Icon source="file-video" size={22} color={theme.colors.primary} />
-                </View>
-              )}
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
-              descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-            />
-            <Divider style={{ marginHorizontal: 16 }} />
-            <View style={styles.formatHint}>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                For other formats (MKV, AVI), convert to MP4 using HandBrake or FFmpeg.
-              </Text>
-            </View>
-          </Surface>
-        </View>
+        <SettingsSection title="Supported Formats">
+          <List.Item
+            title="Video Files"
+            description="MP4, MOV, M4V"
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="file-video" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+          />
+          <Divider style={{ marginHorizontal: spacing.md }} />
+          <View style={styles.formatHint}>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              For other formats (MKV, AVI), convert to MP4 using HandBrake or FFmpeg.
+            </Text>
+          </View>
+        </SettingsSection>
       </ScrollView>
 
       <TagList
@@ -321,54 +317,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: spacing.xl,
   },
   section: {
-    marginTop: 24,
-    paddingHorizontal: 16,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   sectionTitle: {
     textTransform: 'uppercase',
-    marginBottom: 12,
-    marginLeft: 4,
+    marginBottom: spacing.sm + 4,
+    marginLeft: spacing.xs,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   card: {
-    borderRadius: 16,
-    marginBottom: 12,
+    borderRadius: borderRadius.xl,
+    marginBottom: spacing.sm + 4,
   },
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   versionBadge: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.lg,
   },
   buttonRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-end',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   buttonRowEnd: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   actionButton: {
     minWidth: 90,
   },
   formatHint: {
-    padding: 16,
+    padding: spacing.md,
   },
 });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useDeviceType } from '@shared/hooks';
 import {
   Modal,
   Portal,
@@ -29,6 +30,7 @@ export function TagEditor({
   existingNames = [],
 }: TagEditorProps) {
   const theme = useTheme();
+  const { isTablet } = useDeviceType();
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<string>(tagColors[0]);
   const [error, setError] = useState('');
@@ -79,6 +81,7 @@ export function TagEditor({
         onDismiss={onDismiss}
         contentContainerStyle={[
           styles.modal,
+          isTablet && styles.modalTablet,
           { backgroundColor: theme.colors.surface },
         ]}
       >
@@ -197,9 +200,11 @@ const styles = StyleSheet.create({
     margin: spacing.lg,
     padding: spacing.lg,
     borderRadius: 16,
-    alignSelf: 'center',
     width: '90%',
-    maxWidth: 400,
+    alignSelf: 'center',
+  },
+  modalTablet: {
+    width: 400,
   },
   title: {
     fontWeight: '600',

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { formatTime } from '../../utils';
+import { colors } from '@shared/theme';
 
 interface TimeDisplayProps {
   currentTime: number;
@@ -28,6 +29,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   text: {
-    color: '#FFFFFF',
+    color: colors.playerText,
   },
 });

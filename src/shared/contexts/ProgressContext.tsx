@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   ReactNode,
 } from 'react';
 import { ProgressData, ProgressState, ProgressAction, VideoProgress, Course, Section } from '../types';
@@ -63,21 +64,51 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     videosRef.current = state.data.videos;
   }, [state.data.videos]);
 
-  // Load progress from storage on mount
+  // Ref for debounced save timeout
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load progress from storage on mount (with cleanup)
   useEffect(() => {
+    let isMounted = true;
     const loadProgress = async () => {
       const progress = await storageService.getProgress();
-      dispatch({ type: 'LOAD_PROGRESS', payload: progress });
+      if (isMounted) {
+        dispatch({ type: 'LOAD_PROGRESS', payload: progress });
+      }
     };
     loadProgress();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Save progress to storage whenever it changes (with debouncing potential)
+  // Save progress to storage with 5-second debounce (reduces battery drain)
   useEffect(() => {
     if (state.isLoaded) {
-      storageService.saveProgress(state.data);
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      // Debounce save - only write to storage every 5 seconds
+      saveTimeoutRef.current = setTimeout(() => {
+        storageService.saveProgress(state.data);
+      }, 5000);
     }
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [state.data, state.isLoaded]);
+
+  // Save immediately on unmount to avoid losing progress
+  useEffect(() => {
+    return () => {
+      if (state.isLoaded && state.data.videos) {
+        storageService.saveProgress(state.data);
+      }
+    };
+  }, []);
 
   const updateVideoProgress = useCallback(
     (videoId: string, currentTime: number, duration: number) => {
@@ -157,17 +188,21 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     await storageService.clearAll();
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders in consumers
+  const contextValue = useMemo(
+    () => ({
+      state,
+      updateVideoProgress,
+      getVideoProgress,
+      getSectionProgress,
+      getCourseProgress,
+      clearAllProgress,
+    }),
+    [state, updateVideoProgress, getVideoProgress, getSectionProgress, getCourseProgress, clearAllProgress]
+  );
+
   return (
-    <ProgressContext.Provider
-      value={{
-        state,
-        updateVideoProgress,
-        getVideoProgress,
-        getSectionProgress,
-        getCourseProgress,
-        clearAllProgress,
-      }}
-    >
+    <ProgressContext.Provider value={contextValue}>
       {children}
     </ProgressContext.Provider>
   );

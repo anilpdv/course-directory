@@ -1,11 +1,12 @@
 import React, { useState, memo } from 'react';
-import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { List, Text, ProgressBar, Icon, useTheme } from 'react-native-paper';
+import { View, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { Text, Icon, useTheme } from 'react-native-paper';
 import { Section, Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { VideoItem } from './VideoItem';
+import { spacing, borderRadius } from '@shared/theme';
 
-// Enable LayoutAnimation on Android
+// Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -34,24 +35,26 @@ function SectionAccordionComponent({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-      <List.Accordion
-        title={section.name}
-        description={`${progress.completed}/${progress.total} completed`}
-        expanded={isExpanded}
-        onPress={handlePress}
-        titleStyle={[styles.title, { color: theme.colors.onSurface }]}
-        descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
-        style={[styles.accordion, { backgroundColor: theme.colors.surface }]}
-        left={() => (
+      <Pressable onPress={handlePress}>
+        <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Icon
-              source="folder-outline"
-              size={24}
-              color={theme.colors.primary}
-            />
+            <Icon source="folder-outline" size={24} color={theme.colors.primary} />
           </View>
-        )}
-        right={() => (
+          <View style={styles.titleContainer}>
+            <Text
+              variant="titleMedium"
+              style={[styles.title, { color: theme.colors.onSurface }]}
+              numberOfLines={2}
+            >
+              {section.name}
+            </Text>
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              {progress.completed}/{progress.total} completed
+            </Text>
+          </View>
           <View style={styles.rightContainer}>
             {isComplete ? (
               <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
@@ -65,24 +68,23 @@ function SectionAccordionComponent({
                 {Math.round(progress.percent)}%
               </Text>
             )}
-            <Icon
-              source={isExpanded ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color={theme.colors.onSurfaceVariant}
-            />
+            <View style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }}>
+              <Icon source="chevron-down" size={24} color={theme.colors.onSurfaceVariant} />
+            </View>
           </View>
-        )}
-      >
-        <View />
-      </List.Accordion>
+        </View>
+      </Pressable>
 
       {/* Progress bar */}
       <View style={styles.progressBarContainer}>
-        <ProgressBar
-          progress={progress.percent / 100}
-          color={theme.colors.primary}
-          style={styles.progressBar}
-        />
+        <View style={[styles.progressTrack, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <View
+            style={[
+              styles.progressFill,
+              { backgroundColor: theme.colors.primary, width: `${progress.percent}%` },
+            ]}
+          />
+        </View>
       </View>
 
       {/* Videos List */}
@@ -113,28 +115,33 @@ export const SectionAccordion = memo(SectionAccordionComponent, (prevProps, next
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 16,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    borderRadius: borderRadius.xl,
     overflow: 'hidden',
   },
-  accordion: {
-    paddingVertical: 4,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
-    marginLeft: 16,
+    marginRight: spacing.sm + 4,
+  },
+  titleContainer: {
+    flex: 1,
   },
   title: {
     fontWeight: '600',
-    fontSize: 16,
+    marginBottom: spacing.xs,
   },
   rightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   completeBadge: {
     width: 24,
@@ -144,12 +151,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressBarContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm + 4,
   },
-  progressBar: {
+  progressTrack: {
     height: 4,
-    borderRadius: 2,
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: borderRadius.sm,
   },
   videosList: {
     borderTopWidth: 1,

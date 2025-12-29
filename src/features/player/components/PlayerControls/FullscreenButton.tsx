@@ -12,7 +12,7 @@ export function FullscreenButton({ isFullscreen, onPress }: FullscreenButtonProp
   return (
     <IconButton
       icon={isFullscreen ? 'fullscreen-exit' : 'fullscreen'}
-      iconColor="#FFFFFF"
+      iconColor={colors.playerIcon}
       size={24}
       onPress={onPress}
       style={styles.button}

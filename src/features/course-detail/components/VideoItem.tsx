@@ -1,9 +1,10 @@
 import React, { memo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { List, Text, ProgressBar, Icon, IconButton, useTheme } from 'react-native-paper';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text, ProgressBar, Icon, IconButton, useTheme } from 'react-native-paper';
 import { Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { formatTime } from '@shared/utils/formatters';
+import { spacing, borderRadius } from '@shared/theme';
 
 interface VideoItemProps {
   video: Video;
@@ -18,66 +19,74 @@ function VideoItemComponent({ video, onPress }: VideoItemProps) {
   const hasProgress = progress && progress.lastPosition > 0;
 
   return (
-    <List.Item
-      title={video.name}
-      titleNumberOfLines={2}
-      titleStyle={[
-        styles.title,
-        { color: isComplete ? theme.colors.onSurfaceVariant : theme.colors.onSurface },
-      ]}
-      description={
-        hasProgress && !isComplete ? (
-          <View style={styles.resumeInfo}>
-            <Text variant="labelSmall" style={{ color: theme.colors.primary }}>
-              Resume at {formatTime(progress.lastPosition)}
-            </Text>
-            <ProgressBar
-              progress={(progress.percentComplete || 0) / 100}
-              color={theme.colors.primary}
-              style={styles.progressBar}
-            />
+    <Pressable onPress={onPress}>
+        <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.leftContainer}>
+            {isComplete ? (
+              <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
+                <Icon source="check" size={16} color={theme.colors.onPrimary} />
+              </View>
+            ) : hasProgress ? (
+              <View style={[styles.statusIndicator, { borderColor: theme.colors.primary }]} />
+            ) : (
+              <View style={[styles.statusIndicator, { borderColor: theme.colors.onSurfaceVariant }]} />
+            )}
           </View>
-        ) : null
-      }
-      style={[styles.container, { backgroundColor: theme.colors.surface }]}
-      left={() => (
-        <View style={styles.leftContainer}>
-          {isComplete ? (
-            <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
-              <Icon source="check" size={16} color={theme.colors.onPrimary} />
-            </View>
-          ) : hasProgress ? (
-            <View style={[styles.statusIndicator, { borderColor: theme.colors.primary }]} />
-          ) : (
-            <View style={[styles.statusIndicator, { borderColor: theme.colors.onSurfaceVariant }]} />
-          )}
+
+          <View style={styles.contentContainer}>
+            <Text
+              variant="bodyMedium"
+              numberOfLines={2}
+              style={[
+                styles.title,
+                { color: isComplete ? theme.colors.onSurfaceVariant : theme.colors.onSurface },
+              ]}
+            >
+              {video.name}
+            </Text>
+            {hasProgress && !isComplete && (
+              <View style={styles.resumeInfo}>
+                <Text variant="labelSmall" style={{ color: theme.colors.primary }}>
+                  Resume at {formatTime(progress.lastPosition)}
+                </Text>
+                <ProgressBar
+                  progress={(progress.percentComplete || 0) / 100}
+                  color={theme.colors.primary}
+                  style={styles.progressBar}
+                />
+              </View>
+            )}
+          </View>
+
+          <IconButton
+            icon="play"
+            mode="contained"
+            size={20}
+            onPress={onPress}
+            style={styles.playButton}
+          />
         </View>
-      )}
-      right={() => (
-        <IconButton
-          icon="play"
-          mode="contained"
-          size={20}
-          onPress={onPress}
-          style={styles.playButton}
-        />
-      )}
-      onPress={onPress}
-    />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 4,
-  },
-  title: {
-    fontSize: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 4,
+    paddingHorizontal: spacing.md,
   },
   leftContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
+    marginRight: spacing.sm + 4,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 15,
   },
   statusIndicator: {
     width: 24,
@@ -93,12 +102,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resumeInfo: {
-    marginTop: 4,
-    gap: 4,
+    marginTop: spacing.xs,
+    gap: spacing.xs,
   },
   progressBar: {
     height: 3,
-    borderRadius: 1.5,
+    borderRadius: borderRadius.sm,
     width: '60%',
   },
   playButton: {
@@ -107,8 +116,6 @@ const styles = StyleSheet.create({
 });
 
 // Memoize to prevent unnecessary re-renders
-// Note: This component uses useProgress hook internally, so it will still
-// re-render when progress changes, but this prevents re-renders from parent updates
 export const VideoItem = memo(VideoItemComponent, (prevProps, nextProps) => {
   return (
     prevProps.video.id === nextProps.video.id &&
