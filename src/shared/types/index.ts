@@ -114,7 +114,8 @@ export type TagsAction =
   | { type: 'DELETE_TAG'; payload: string }
   | { type: 'ASSIGN_TAG'; payload: { courseId: string; tagId: string } }
   | { type: 'UNASSIGN_TAG'; payload: { courseId: string; tagId: string } }
-  | { type: 'SET_COURSE_TAGS'; payload: { courseId: string; tagIds: string[] } };
+  | { type: 'SET_COURSE_TAGS'; payload: { courseId: string; tagIds: string[] } }
+  | { type: 'CLEAR_ALL_TAGS' };
 
 // Filter state
 export interface TagFilter {

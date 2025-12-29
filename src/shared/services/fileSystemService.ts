@@ -42,6 +42,15 @@ class FileSystemService {
     }
   }
 
+  // Clear all courses data from AsyncStorage
+  async clearCoursesData(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(COURSES_DATA_KEY);
+    } catch (error) {
+      console.error('Error clearing courses data:', error);
+    }
+  }
+
   // Migration from old single-path format
   async migrateFromSinglePath(): Promise<StoredCourse[]> {
     try {
@@ -61,8 +70,36 @@ class FileSystemService {
     }
   }
 
+  // Analyze a folder as a SINGLE course (user explicitly chose "Add Course")
+  // Always treats the selected folder as one course, regardless of structure
+  async analyzeSingleCourse(folderPath: string): Promise<StoredCourse | null> {
+    try {
+      const folder = new Directory(folderPath);
+      if (!folder.exists) {
+        return null;
+      }
+
+      // Check if folder has any video content (directly or in subfolders)
+      const hasContent = await this.hasCourseContent(folder);
+      if (!hasContent) {
+        return null;
+      }
+
+      return {
+        id: this.generateId(folderPath),
+        name: this.cleanName(this.extractFolderName(folderPath)),
+        folderPath: folderPath,
+        addedAt: Date.now(),
+      };
+    } catch (error) {
+      console.error('Error analyzing single course:', error);
+      return null;
+    }
+  }
+
   // Analyze a folder to determine if it contains single or multiple courses
-  async analyzeFolder(folderPath: string): Promise<{
+  // Used for "Add Multiple Courses" - auto-detects structure
+  async analyzeMultipleCourses(folderPath: string): Promise<{
     type: 'single' | 'multiple';
     courses: StoredCourse[];
   }> {
@@ -88,8 +125,45 @@ class FileSystemService {
 
       // Check subdirectories
       const contents = folder.list();
-      const potentialCourses: StoredCourse[] = [];
 
+      // First, check if ALL subfolders are "section folders" (have videos directly, no deeper nesting)
+      // This means the selected folder is a single course with sections
+      let allAreSections = true;
+      let hasAnySections = false;
+
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+
+        if (subDir.exists) {
+          const isSection = await this.isSectionFolder(subDir);
+          const hasContent = await this.hasCourseContent(subDir);
+
+          if (hasContent) {
+            hasAnySections = true;
+            if (!isSection) {
+              // This subfolder has nested course structure, not just videos
+              allAreSections = false;
+            }
+          }
+        }
+      }
+
+      // If all content-containing subfolders are sections, treat as single course
+      if (hasAnySections && allAreSections) {
+        return {
+          type: 'single',
+          courses: [{
+            id: this.generateId(folderPath),
+            name: this.cleanName(this.extractFolderName(folderPath)),
+            folderPath: folderPath,
+            addedAt: Date.now(),
+          }]
+        };
+      }
+
+      // Otherwise, treat each subfolder with course content as a separate course
+      const potentialCourses: StoredCourse[] = [];
       for (const item of contents) {
         const itemName = this.getItemName(item);
         const subDir = new Directory(folder, itemName);
@@ -111,31 +185,19 @@ class FileSystemService {
         return { type: 'multiple', courses: potentialCourses };
       }
 
-      // Check if folder has section subdirectories (folders with videos) - treat as single course
-      for (const item of contents) {
-        const itemName = this.getItemName(item);
-        const subDir = new Directory(folder, itemName);
-        if (subDir.exists) {
-          const hasVideos = await this.hasVideosInFolder(subDir);
-          if (hasVideos) {
-            return {
-              type: 'single',
-              courses: [{
-                id: this.generateId(folderPath),
-                name: this.cleanName(this.extractFolderName(folderPath)),
-                folderPath: folderPath,
-                addedAt: Date.now(),
-              }]
-            };
-          }
-        }
-      }
-
       return { type: 'single', courses: [] };
     } catch (error) {
       console.error('Error analyzing folder:', error);
       return { type: 'single', courses: [] };
     }
+  }
+
+  // Keep analyzeFolder as an alias for backward compatibility (migration)
+  async analyzeFolder(folderPath: string): Promise<{
+    type: 'single' | 'multiple';
+    courses: StoredCourse[];
+  }> {
+    return this.analyzeMultipleCourses(folderPath);
   }
 
   // Check if a folder has videos directly in it
@@ -160,6 +222,44 @@ class FileSystemService {
         const itemName = this.getItemName(item);
         const subDir = new Directory(folder, itemName);
         if (subDir.exists && await this.hasVideosInFolder(subDir)) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  // Check if a folder is a "section" (has videos directly but no nested course structures)
+  private async isSectionFolder(folder: Directory): Promise<boolean> {
+    try {
+      const hasDirectVideos = await this.hasVideosInFolder(folder);
+      if (!hasDirectVideos) return false;
+
+      // Check if any subfolder has videos (which would make this a course, not a section)
+      const contents = folder.list();
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+        if (subDir.exists && await this.hasVideosInFolder(subDir)) {
+          return false; // Has nested videos, so this is a course structure, not a section
+        }
+      }
+      return true; // Has direct videos only, no nested videos - it's a section
+    } catch {
+      return false;
+    }
+  }
+
+  // Check if a folder has course structure (subfolders with videos)
+  private async hasCourseStructure(folder: Directory): Promise<boolean> {
+    try {
+      const contents = folder.list();
+      for (const item of contents) {
+        const itemName = this.getItemName(item);
+        const subDir = new Directory(folder, itemName);
+        if (subDir.exists && await this.hasCourseContent(subDir)) {
           return true;
         }
       }

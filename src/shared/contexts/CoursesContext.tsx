@@ -63,9 +63,11 @@ interface CoursesContextType {
   state: CoursesState;
   scanCourses: () => Promise<void>;
   getCourse: (id: string) => Course | undefined;
-  addCourses: () => Promise<AddCoursesResult>;
+  addSingleCourse: () => Promise<AddCoursesResult>;
+  addMultipleCourses: () => Promise<AddCoursesResult>;
   removeCourse: (courseId: string) => Promise<RemoveCourseResult>;
   loadStoredCourses: () => Promise<void>;
+  clearAllCourses: () => Promise<void>;
 }
 
 const CoursesContext = createContext<CoursesContextType | undefined>(undefined);
@@ -110,8 +112,8 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
     [state.courses]
   );
 
-  // Add courses - opens picker, analyzes folder, adds courses with duplicate detection
-  const addCourses = useCallback(async (): Promise<AddCoursesResult> => {
+  // Add a single course - opens picker, treats selected folder as ONE course
+  const addSingleCourse = useCallback(async (): Promise<AddCoursesResult> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const folderPath = await fileSystemService.pickFolder();
@@ -122,7 +124,56 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
         return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
       }
 
-      const analysis = await fileSystemService.analyzeFolder(folderPath);
+      const course = await fileSystemService.analyzeSingleCourse(folderPath);
+
+      // No course content found in selected folder
+      if (!course) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
+      }
+
+      // Check for duplicate
+      const existingIds = new Set(state.storedCourses.map(c => c.id));
+      if (existingIds.has(course.id)) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 1, cancelled: false, noCoursesFound: false, error: null };
+      }
+
+      // Add to stored courses
+      const allStored = [...state.storedCourses, course];
+      await fileSystemService.saveStoredCourses(allStored);
+      dispatch({ type: 'ADD_STORED_COURSES', payload: [course] });
+
+      // Scan the newly added course
+      const scannedNew = await fileSystemService.scanAllCourses([course]);
+      const allCourses = [...state.courses, ...scannedNew];
+      dispatch({ type: 'SET_COURSES', payload: allCourses });
+
+      return { added: 1, duplicates: 0, cancelled: false, noCoursesFound: false, error: null };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add course';
+      dispatch({
+        type: 'SET_ERROR',
+        payload: errorMessage,
+      });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: false, error: errorMessage };
+    }
+  }, [state.storedCourses, state.courses]);
+
+  // Add multiple courses - opens picker, auto-detects courses in folder
+  const addMultipleCourses = useCallback(async (): Promise<AddCoursesResult> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const folderPath = await fileSystemService.pickFolder();
+
+      // User cancelled folder picker
+      if (!folderPath) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
+      }
+
+      const analysis = await fileSystemService.analyzeMultipleCourses(folderPath);
 
       // No courses found in selected folder
       if (analysis.courses.length === 0) {
@@ -174,15 +225,24 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
     }
   }, [state.storedCourses]);
 
+  // Clear all courses
+  const clearAllCourses = useCallback(async (): Promise<void> => {
+    await fileSystemService.clearCoursesData();
+    dispatch({ type: 'SET_STORED_COURSES', payload: [] });
+    dispatch({ type: 'SET_COURSES', payload: [] });
+  }, []);
+
   return (
     <CoursesContext.Provider
       value={{
         state,
         scanCourses,
         getCourse,
-        addCourses,
+        addSingleCourse,
+        addMultipleCourses,
         removeCourse,
         loadStoredCourses,
+        clearAllCourses,
       }}
     >
       {children}

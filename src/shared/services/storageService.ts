@@ -121,6 +121,14 @@ class StorageService {
       console.error('Failed to save course tags:', error);
     }
   }
+
+  async clearTagsData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([KEYS.TAGS, KEYS.COURSE_TAGS]);
+    } catch (error) {
+      console.error('Failed to clear tags data:', error);
+    }
+  }
 }
 
 export const storageService = new StorageService();

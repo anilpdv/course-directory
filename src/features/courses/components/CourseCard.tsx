@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Card, Text, ProgressBar, Chip, Icon, useTheme } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Card, Text, ProgressBar, Chip, Icon, useTheme, Menu, IconButton } from 'react-native-paper';
 import { Course } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
@@ -10,47 +10,26 @@ interface CourseCardProps {
   course: Course;
   onPress: () => void;
   onRemove?: (courseId: string) => void;
+  isTablet?: boolean;
 }
 
-export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
+export function CourseCard({ course, onPress, onRemove, isTablet }: CourseCardProps) {
   const theme = useTheme();
   const { getCourseProgress } = useProgress();
   const { getTagsForCourse } = useTags();
   const [tagSelectorVisible, setTagSelectorVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuKey, setMenuKey] = useState(0);
 
   const progress = getCourseProgress(course);
   const isComplete = progress.percent >= 100;
   const courseTags = getTagsForCourse(course.id);
 
-  const handleLongPress = useCallback(() => {
-    Alert.alert(
-      course.name,
-      'What would you like to do?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Manage Tags',
-          onPress: () => setTagSelectorVisible(true),
-        },
-        ...(onRemove
-          ? [
-              {
-                text: 'Remove Course',
-                style: 'destructive' as const,
-                onPress: () => onRemove(course.id),
-              },
-            ]
-          : []),
-      ]
-    );
-  }, [course, onRemove]);
-
   return (
     <>
     <Card
-      style={[styles.card, { backgroundColor: theme.colors.surface }]}
+      style={[styles.card, isTablet && styles.cardTablet, { backgroundColor: theme.colors.surface }]}
       onPress={onPress}
-      onLongPress={handleLongPress}
       mode="elevated"
     >
       <Card.Content style={styles.content}>
@@ -113,6 +92,47 @@ export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
               Complete
             </Chip>
           )}
+          <Menu
+            key={menuKey}
+            visible={menuVisible}
+            onDismiss={() => {
+              setMenuVisible(false);
+              setMenuKey(k => k + 1);
+            }}
+            anchor={
+              <IconButton
+                icon="dots-vertical"
+                size={24}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setMenuVisible(true);
+                }}
+                hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                style={styles.menuButton}
+              />
+            }
+          >
+            <Menu.Item
+              leadingIcon="tag-multiple"
+              onPress={() => {
+                setMenuVisible(false);
+                setMenuKey(k => k + 1);
+                setTagSelectorVisible(true);
+              }}
+              title="Manage Tags"
+            />
+            {onRemove && (
+              <Menu.Item
+                leadingIcon="delete"
+                onPress={() => {
+                  setMenuVisible(false);
+                  setMenuKey(k => k + 1);
+                  onRemove(course.id);
+                }}
+                title="Remove Course"
+              />
+            )}
+          </Menu>
         </View>
 
         <View style={styles.progressSection}>
@@ -129,10 +149,6 @@ export function CourseCard({ course, onPress, onRemove }: CourseCardProps) {
           </Text>
         </View>
       </Card.Content>
-
-      <Card.Actions style={styles.actions}>
-        <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
-      </Card.Actions>
     </Card>
 
     <TagSelector
@@ -150,6 +166,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 8,
     borderRadius: 16,
+  },
+  cardTablet: {
+    flex: 1,
+    marginHorizontal: 8,
   },
   content: {
     paddingBottom: 8,
@@ -204,8 +224,7 @@ const styles = StyleSheet.create({
   progressText: {
     marginTop: 6,
   },
-  actions: {
-    justifyContent: 'flex-end',
-    paddingTop: 0,
+  menuButton: {
+    margin: -4,
   },
 });

@@ -5,9 +5,10 @@ import { Text, Button, Icon, useTheme } from 'react-native-paper';
 interface EmptyCoursesViewProps {
   onRescan: () => void;
   onAddCourse: () => void;
+  onAddMultipleCourses: () => void;
 }
 
-export function EmptyCoursesView({ onRescan, onAddCourse }: EmptyCoursesViewProps) {
+export function EmptyCoursesView({ onRescan, onAddCourse, onAddMultipleCourses }: EmptyCoursesViewProps) {
   const theme = useTheme();
 
   return (
@@ -40,6 +41,14 @@ export function EmptyCoursesView({ onRescan, onAddCourse }: EmptyCoursesViewProp
         style={styles.button}
       >
         Add Course
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={onAddMultipleCourses}
+        icon="folder-multiple"
+        style={styles.button}
+      >
+        Add Multiple Courses
       </Button>
     </View>
   );

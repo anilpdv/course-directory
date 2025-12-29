@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -22,9 +22,14 @@ import { TagFilterDrawer, useTagFilter } from '@features/tags';
 export function CoursesListScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { state, scanCourses, addCourses, removeCourse } = useCourses();
+  const { state, scanCourses, addSingleCourse, addMultipleCourses, removeCourse } = useCourses();
   const { courses, isLoading, error, hasCourses } = state;
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
+
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const numColumns = isTablet ? 3 : 1;
 
   const {
     selectedTagIds,
@@ -54,8 +59,43 @@ export function CoursesListScreen() {
     [router]
   );
 
-  const handleAddCourse = useCallback(async () => {
-    const result = await addCourses();
+  const handleAddSingleCourse = useCallback(async () => {
+    const result = await addSingleCourse();
+
+    // User cancelled - no alert needed
+    if (result.cancelled) {
+      return;
+    }
+
+    // Error occurred
+    if (result.error) {
+      Alert.alert('Error', result.error);
+      return;
+    }
+
+    // No courses found in folder
+    if (result.noCoursesFound) {
+      Alert.alert(
+        'No Course Found',
+        'No video content was found in this folder. Make sure the folder contains video files (MP4, MOV, M4V).'
+      );
+      return;
+    }
+
+    // Duplicate
+    if (result.added === 0 && result.duplicates > 0) {
+      Alert.alert('Already Added', 'This course is already in your library.');
+      return;
+    }
+
+    // Success - course added
+    if (result.added > 0) {
+      Alert.alert('Course Added', 'The course has been added to your library.');
+    }
+  }, [addSingleCourse]);
+
+  const handleAddMultipleCourses = useCallback(async () => {
+    const result = await addMultipleCourses();
 
     // User cancelled - no alert needed
     if (result.cancelled) {
@@ -92,7 +132,7 @@ export function CoursesListScreen() {
         }`
       );
     }
-  }, [addCourses]);
+  }, [addMultipleCourses]);
 
   const handleRemoveCourse = useCallback(async (courseId: string) => {
     const result = await removeCourse(courseId);
@@ -107,9 +147,10 @@ export function CoursesListScreen() {
         course={item}
         onPress={() => handleCoursePress(item)}
         onRemove={handleRemoveCourse}
+        isTablet={isTablet}
       />
     ),
-    [handleCoursePress, handleRemoveCourse]
+    [handleCoursePress, handleRemoveCourse, isTablet]
   );
 
   // Welcome screen - no courses added
@@ -134,18 +175,28 @@ export function CoursesListScreen() {
             Add your video courses to get started.
           </Text>
 
-          <Button
-            mode="contained"
-            onPress={handleAddCourse}
-            loading={isLoading}
-            disabled={isLoading}
-            icon="folder-plus"
-            style={styles.selectFolderButton}
-            contentStyle={styles.selectFolderContent}
-            labelStyle={styles.selectFolderLabel}
-          >
-            Add Course
-          </Button>
+          <View style={styles.welcomeButtonRow}>
+            <Button
+              mode="contained"
+              onPress={handleAddSingleCourse}
+              loading={isLoading}
+              disabled={isLoading}
+              icon="folder-plus"
+              style={styles.welcomeButton}
+            >
+              Add Course
+            </Button>
+            <Button
+              mode="outlined"
+              onPress={handleAddMultipleCourses}
+              loading={isLoading}
+              disabled={isLoading}
+              icon="folder-multiple"
+              style={styles.welcomeButton}
+            >
+              Add Multiple
+            </Button>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -219,9 +270,12 @@ export function CoursesListScreen() {
       ) : (
         <>
           <FlatList
+            key={numColumns}
             data={filteredCourses}
             keyExtractor={(item) => item.id}
             renderItem={renderCourse}
+            numColumns={numColumns}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
             ListHeaderComponent={courses.length > 0 ? renderHeader : null}
             ListEmptyComponent={
               hasActiveFilters ? (
@@ -242,7 +296,11 @@ export function CoursesListScreen() {
                   </Button>
                 </View>
               ) : (
-                <EmptyCoursesView onRescan={scanCourses} onAddCourse={handleAddCourse} />
+                <EmptyCoursesView
+                onRescan={scanCourses}
+                onAddCourse={handleAddSingleCourse}
+                onAddMultipleCourses={handleAddMultipleCourses}
+              />
               )
             }
             contentContainerStyle={[
@@ -259,11 +317,24 @@ export function CoursesListScreen() {
             }
           />
           {courses.length > 0 && (
-            <FAB
-              icon="plus"
-              label="Add Course"
-              style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-              onPress={handleAddCourse}
+            <FAB.Group
+              open={fabOpen}
+              visible
+              icon={fabOpen ? 'close' : 'plus'}
+              actions={[
+                {
+                  icon: 'folder-plus',
+                  label: 'Add Course',
+                  onPress: handleAddSingleCourse,
+                },
+                {
+                  icon: 'folder-multiple',
+                  label: 'Add Multiple Courses',
+                  onPress: handleAddMultipleCourses,
+                },
+              ]}
+              onStateChange={({ open }) => setFabOpen(open)}
+              fabStyle={{ backgroundColor: theme.colors.primary }}
               color={theme.colors.onPrimary}
             />
           )}
@@ -301,17 +372,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
-  selectFolderButton: {
+  welcomeButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 24,
+  },
+  welcomeButton: {
     borderRadius: 12,
-  },
-  selectFolderContent: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  selectFolderLabel: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   hintText: {
     textAlign: 'center',
@@ -360,6 +427,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 80,
   },
+  columnWrapper: {
+    paddingHorizontal: 8,
+  },
   listContentEmpty: {
     flex: 1,
   },
@@ -373,11 +443,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 24,
-  },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 24,
-    elevation: 4,
   },
 });

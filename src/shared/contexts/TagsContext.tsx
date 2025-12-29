@@ -77,6 +77,12 @@ function tagsReducer(state: TagsState, action: TagsAction): TagsState {
           [action.payload.courseId]: action.payload.tagIds,
         },
       };
+    case 'CLEAR_ALL_TAGS':
+      return {
+        ...state,
+        tags: [],
+        courseTags: {},
+      };
     default:
       return state;
   }
@@ -103,6 +109,8 @@ interface TagsContextType {
   getTagsForCourse: (courseId: string) => Tag[];
   getCoursesForTag: (tagId: string) => string[];
   getTagById: (tagId: string) => Tag | undefined;
+  // Clear all
+  clearAllTags: () => Promise<void>;
 }
 
 const TagsContext = createContext<TagsContextType | undefined>(undefined);
@@ -205,6 +213,11 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     [state.tags]
   );
 
+  const clearAllTags = useCallback(async (): Promise<void> => {
+    dispatch({ type: 'CLEAR_ALL_TAGS' });
+    await storageService.clearTagsData();
+  }, []);
+
   return (
     <TagsContext.Provider
       value={{
@@ -218,6 +231,7 @@ export function TagsProvider({ children }: { children: ReactNode }) {
         getTagsForCourse,
         getCoursesForTag,
         getTagById,
+        clearAllTags,
       }}
     >
       {children}

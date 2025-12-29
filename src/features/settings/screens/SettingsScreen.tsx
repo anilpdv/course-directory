@@ -19,31 +19,55 @@ import { TagList } from '@features/tags';
 export function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { state, addCourses, scanCourses } = useCourses();
+  const { state, addSingleCourse, addMultipleCourses, scanCourses, clearAllCourses } = useCourses();
   const { clearAllProgress, state: progressState } = useProgress();
-  const { state: tagsState } = useTags();
+  const { state: tagsState, clearAllTags } = useTags();
   const [isClearing, setIsClearing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [tagListVisible, setTagListVisible] = useState(false);
 
   const { courses } = state;
   const progressCount = Object.keys(progressState.data.videos).length;
   const tagCount = tagsState.tags.length;
 
-  const handleAddCourse = async () => {
-    const result = await addCourses();
+  const handleAddSingleCourse = async () => {
+    const result = await addSingleCourse();
 
-    // User cancelled - no alert needed
-    if (result.cancelled) {
-      return;
-    }
+    if (result.cancelled) return;
 
-    // Error occurred
     if (result.error) {
       Alert.alert('Error', result.error);
       return;
     }
 
-    // No courses found in folder
+    if (result.noCoursesFound) {
+      Alert.alert(
+        'No Course Found',
+        'No video content was found in this folder. Make sure the folder contains video files (MP4, MOV, M4V).'
+      );
+      return;
+    }
+
+    if (result.added === 0 && result.duplicates > 0) {
+      Alert.alert('Already Added', 'This course is already in your library.');
+      return;
+    }
+
+    if (result.added > 0) {
+      Alert.alert('Course Added', 'The course has been added to your library.');
+    }
+  };
+
+  const handleAddMultipleCourses = async () => {
+    const result = await addMultipleCourses();
+
+    if (result.cancelled) return;
+
+    if (result.error) {
+      Alert.alert('Error', result.error);
+      return;
+    }
+
     if (result.noCoursesFound) {
       Alert.alert(
         'No Courses Found',
@@ -52,13 +76,11 @@ export function SettingsScreen() {
       return;
     }
 
-    // All duplicates
     if (result.added === 0 && result.duplicates > 0) {
       Alert.alert('Already Added', 'These courses are already in your library.');
       return;
     }
 
-    // Success - courses added
     if (result.added > 0) {
       Alert.alert(
         'Courses Added',
@@ -94,6 +116,28 @@ export function SettingsScreen() {
     Alert.alert('Done', 'Courses have been rescanned.');
   };
 
+  const handleDeleteAllData = () => {
+    Alert.alert(
+      'Delete All Data',
+      'This will permanently delete all courses, progress, tags, and settings. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Everything',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            await clearAllProgress();
+            await clearAllTags();
+            await clearAllCourses();
+            setIsDeleting(false);
+            Alert.alert('Done', 'All data has been deleted.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -118,8 +162,11 @@ export function SettingsScreen() {
               descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
             />
             <View style={styles.buttonRow}>
-              <Button mode="contained" onPress={handleAddCourse} style={styles.actionButton}>
+              <Button mode="contained" onPress={handleAddSingleCourse} style={styles.actionButton}>
                 Add Course
+              </Button>
+              <Button mode="outlined" onPress={handleAddMultipleCourses} style={styles.actionButton}>
+                Add Multiple
               </Button>
               <Button mode="outlined" onPress={handleRescan} style={styles.actionButton}>
                 Rescan
@@ -176,6 +223,29 @@ export function SettingsScreen() {
                 buttonColor={theme.colors.error}
               >
                 Clear Progress
+              </Button>
+            </View>
+            <Divider style={{ marginHorizontal: 16 }} />
+            <List.Item
+              title="All App Data"
+              description="Courses, tags, progress, and settings"
+              left={() => (
+                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                  <Icon source="database-remove" size={22} color={theme.colors.error} />
+                </View>
+              )}
+              titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
+              descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+            />
+            <View style={styles.buttonRowEnd}>
+              <Button
+                mode="contained"
+                onPress={handleDeleteAllData}
+                disabled={isDeleting}
+                loading={isDeleting}
+                buttonColor={theme.colors.error}
+              >
+                Delete All Data
               </Button>
             </View>
           </Surface>
