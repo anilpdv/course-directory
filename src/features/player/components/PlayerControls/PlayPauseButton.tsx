@@ -21,6 +21,8 @@ export function PlayPauseButton({ isPlaying, onPress, size = 'large' }: PlayPaus
       size={iconSize}
       onPress={onPress}
       style={[buttonStyle, { backgroundColor: theme.colors.primary }]}
+      accessibilityLabel={isPlaying ? 'Pause' : 'Play'}
+      accessibilityRole="button"
     />
   );
 }

@@ -124,3 +124,6 @@ export interface TagFilter {
   selectedTagIds: string[];
   filterMode: 'any' | 'all';
 }
+
+// Result type for error handling
+export { Result, success, failure } from './result';

@@ -29,6 +29,9 @@ function PlaylistItemComponent({
         styles.container,
         { backgroundColor: isCurrentVideo ? theme.colors.primaryContainer : theme.colors.surface },
       ]}
+      accessibilityLabel={`${index + 1}. ${video.name}${isCurrentVideo ? ', now playing' : ''}${isComplete ? ', completed' : ''}`}
+      accessibilityHint="Double tap to play"
+      accessibilityRole="button"
     >
       <View style={styles.leftSection}>
         {isComplete ? (
@@ -83,6 +86,7 @@ function PlaylistItemComponent({
           size={24}
           iconColor={theme.colors.primary}
           onPress={() => onSelect(video)}
+          accessibilityLabel={`Play ${video.name}`}
         />
       )}
     </Pressable>

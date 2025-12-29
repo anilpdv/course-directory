@@ -41,6 +41,9 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
         ]}
         onPress={() => onPress(course)}
         mode="elevated"
+        accessibilityLabel={`${course.name}, ${withCount(course.sections.length, 'section')}, ${withCount(course.totalVideos, 'video')}${isComplete ? ', completed' : `, ${Math.round(progress.percent)}% complete`}`}
+        accessibilityHint="Double tap to view course details"
+        accessibilityRole="button"
       >
         <Card.Content style={styles.content}>
           <View style={styles.header}>
@@ -119,6 +122,8 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
                   }}
                   hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
                   style={styles.menuButton}
+                  accessibilityLabel="Course options menu"
+                  accessibilityHint="Double tap to open menu"
                 />
               }
             >

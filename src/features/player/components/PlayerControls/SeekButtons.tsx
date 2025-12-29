@@ -15,10 +15,20 @@ export function SeekButtons({ onSeekBackward, onSeekForward, size = 'large' }: S
 
   return (
     <>
-      <Pressable style={buttonStyle} onPress={onSeekBackward}>
+      <Pressable
+        style={buttonStyle}
+        onPress={onSeekBackward}
+        accessibilityLabel="Rewind 10 seconds"
+        accessibilityRole="button"
+      >
         <IconButton icon="rewind-10" iconColor={colors.playerIcon} size={iconSize} />
       </Pressable>
-      <Pressable style={buttonStyle} onPress={onSeekForward}>
+      <Pressable
+        style={buttonStyle}
+        onPress={onSeekForward}
+        accessibilityLabel="Forward 10 seconds"
+        accessibilityRole="button"
+      >
         <IconButton icon="fast-forward-10" iconColor={colors.playerIcon} size={iconSize} />
       </Pressable>
     </>
@@ -36,7 +46,12 @@ export function SeekBackwardButton({
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (
-    <Pressable style={buttonStyle} onPress={onPress}>
+    <Pressable
+      style={buttonStyle}
+      onPress={onPress}
+      accessibilityLabel="Rewind 10 seconds"
+      accessibilityRole="button"
+    >
       <IconButton icon="rewind-10" iconColor={colors.playerIcon} size={iconSize} />
     </Pressable>
   );
@@ -53,7 +68,12 @@ export function SeekForwardButton({
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (
-    <Pressable style={buttonStyle} onPress={onPress}>
+    <Pressable
+      style={buttonStyle}
+      onPress={onPress}
+      accessibilityLabel="Forward 10 seconds"
+      accessibilityRole="button"
+    >
       <IconButton icon="fast-forward-10" iconColor={colors.playerIcon} size={iconSize} />
     </Pressable>
   );

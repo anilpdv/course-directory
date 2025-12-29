@@ -63,6 +63,9 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
       onMoveShouldSetResponder={() => true}
       onResponderMove={handleMove}
       onResponderRelease={handleSeekEnd}
+      accessibilityLabel={`Progress: ${Math.round(progress * 100)} percent`}
+      accessibilityHint="Drag to seek"
+      accessibilityRole="adjustable"
     >
       <View style={styles.container}>
         <View style={styles.track}>

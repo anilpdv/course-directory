@@ -35,7 +35,13 @@ function SectionAccordionComponent({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-      <Pressable onPress={handlePress}>
+      <Pressable
+        onPress={handlePress}
+        accessibilityLabel={`${section.name}, ${progress.completed} of ${progress.total} videos completed${isComplete ? ', section complete' : ''}`}
+        accessibilityHint={isExpanded ? 'Double tap to collapse section' : 'Double tap to expand section'}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isExpanded }}
+      >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
             <Icon source="folder-outline" size={24} color={theme.colors.primary} />

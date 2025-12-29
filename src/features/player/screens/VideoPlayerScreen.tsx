@@ -14,6 +14,7 @@ import { useControlsVisibility } from '../hooks/useControlsVisibility';
 import { useOrientationMode } from '../hooks/useOrientationMode';
 import { useAutoPlayNext } from '../hooks/useAutoPlayNext';
 import { useVideoNavigation } from '../hooks/useVideoNavigation';
+import { useCallbackWithReset } from '../hooks/useCallbackWithReset';
 
 // Layouts
 import { FullscreenLayout } from '../layouts/FullscreenLayout';
@@ -128,20 +129,9 @@ export function VideoPlayerScreen() {
   }, [currentTime, duration, setCurrentTime, resetHideControlsTimeout]);
 
   // Wrap handlers to reset controls timeout
-  const wrappedPlayPause = useCallback(() => {
-    handlePlayPause();
-    resetHideControlsTimeout();
-  }, [handlePlayPause, resetHideControlsTimeout]);
-
-  const wrappedPlaybackRateChange = useCallback(() => {
-    handlePlaybackRateChange();
-    resetHideControlsTimeout();
-  }, [handlePlaybackRateChange, resetHideControlsTimeout]);
-
-  const wrappedToggleFullscreen = useCallback(() => {
-    toggleFullscreen();
-    resetHideControlsTimeout();
-  }, [toggleFullscreen, resetHideControlsTimeout]);
+  const wrappedPlayPause = useCallbackWithReset(handlePlayPause, resetHideControlsTimeout, []);
+  const wrappedPlaybackRateChange = useCallbackWithReset(handlePlaybackRateChange, resetHideControlsTimeout, []);
+  const wrappedToggleFullscreen = useCallbackWithReset(toggleFullscreen, resetHideControlsTimeout, []);
 
   // Common props for both layouts
   const commonProps = {

@@ -19,7 +19,12 @@ function VideoItemComponent({ video, onPress }: VideoItemProps) {
   const hasProgress = progress && progress.lastPosition > 0;
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={`${video.name}${isComplete ? ', completed' : hasProgress ? `, resume at ${formatTime(progress.lastPosition)}` : ''}`}
+      accessibilityHint="Double tap to play video"
+      accessibilityRole="button"
+    >
         <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.leftContainer}>
             {isComplete ? (
@@ -64,6 +69,7 @@ function VideoItemComponent({ video, onPress }: VideoItemProps) {
             size={20}
             onPress={onPress}
             style={styles.playButton}
+            accessibilityLabel={`Play ${video.name}`}
           />
         </View>
     </Pressable>
