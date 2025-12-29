@@ -353,8 +353,9 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-end',
-    gap: 12,
+    gap: 8,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
@@ -365,7 +366,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   actionButton: {
-    minWidth: 100,
+    minWidth: 90,
   },
   formatHint: {
     padding: 16,

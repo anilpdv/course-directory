@@ -336,9 +336,21 @@ class FileSystemService {
     let totalVideos = 0;
 
     const contents = courseDir.list();
-    const sortedContents = contents.sort((a, b) =>
-      this.extractOrder(this.getItemName(a)) - this.extractOrder(this.getItemName(b))
-    );
+    const sortedContents = contents.sort((a, b) => {
+      const orderA = this.extractOrder(this.getItemName(a));
+      const orderB = this.extractOrder(this.getItemName(b));
+
+      // Primary sort by number
+      if (orderA.primary !== orderB.primary) {
+        return orderA.primary - orderB.primary;
+      }
+
+      // Secondary sort alphabetically (for equal numbers or no numbers)
+      return orderA.secondary.localeCompare(orderB.secondary, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
+    });
 
     let sectionOrder = 0;
     for (const item of sortedContents) {
@@ -422,9 +434,21 @@ class FileSystemService {
 
     try {
       const contents = folder.list();
-      const sortedContents = contents.sort((a, b) =>
-        this.extractOrder(this.getItemName(a)) - this.extractOrder(this.getItemName(b))
-      );
+      const sortedContents = contents.sort((a, b) => {
+        const orderA = this.extractOrder(this.getItemName(a));
+        const orderB = this.extractOrder(this.getItemName(b));
+
+        // Primary sort by number
+        if (orderA.primary !== orderB.primary) {
+          return orderA.primary - orderB.primary;
+        }
+
+        // Secondary sort alphabetically (for equal numbers or no numbers)
+        return orderA.secondary.localeCompare(orderB.secondary, undefined, {
+          numeric: true,
+          sensitivity: 'base'
+        });
+      });
 
       let videoOrder = 0;
       for (const item of sortedContents) {
@@ -468,9 +492,32 @@ class FileSystemService {
     return 'other';
   }
 
-  private extractOrder(name: string): number {
-    const match = name.match(/^[\[\(]?(\d+)[\]\)]?[\s._-]*/);
-    return match ? parseInt(match[1], 10) : Infinity;
+  private extractOrder(name: string): { primary: number; secondary: string } {
+    // Try multiple patterns in order of priority
+
+    // Pattern 1: Number at start (with optional brackets)
+    // Matches: "01 Video", "[01] Video", "(01) Video", "01. Video", "01_Video"
+    let match = name.match(/^[\[\(]?(\d+)[\]\)]?[\s._-]*/);
+    if (match) {
+      return { primary: parseInt(match[1], 10), secondary: name };
+    }
+
+    // Pattern 2: "Lesson/Chapter/Part X" format
+    // Matches: "Lesson 01", "Chapter 1", "Part 05"
+    match = name.match(/^(?:lesson|chapter|part|section|module|unit|video|lecture)\s*(\d+)/i);
+    if (match) {
+      return { primary: parseInt(match[1], 10), secondary: name };
+    }
+
+    // Pattern 3: Any number in the filename (first occurrence)
+    // Matches: "Video 01", "My Video 1", etc.
+    match = name.match(/(\d+)/);
+    if (match) {
+      return { primary: parseInt(match[1], 10), secondary: name };
+    }
+
+    // No number found - sort alphabetically at the end
+    return { primary: Infinity, secondary: name };
   }
 
   private cleanName(name: string): string {
