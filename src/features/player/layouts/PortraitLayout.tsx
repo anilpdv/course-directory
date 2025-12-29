@@ -9,6 +9,7 @@ import { TopBar, CenterControls, BottomBar } from '../components/ControlsOverlay
 import { NextVideoOverlay } from '../components/NextVideoOverlay';
 import { VideoPlaylist } from '../components/VideoPlaylist';
 import { colors } from '@shared/theme/colors';
+import { useDeviceType } from '@shared/hooks/useDeviceType';
 
 interface PortraitLayoutProps {
   player: VideoPlayer;
@@ -79,13 +80,19 @@ export function PortraitLayout({
   onVideoSelect,
 }: PortraitLayoutProps) {
   const theme = useTheme();
+  const { isTablet } = useDeviceType();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       {/* Video Container */}
-      <View style={[styles.videoContainer, { marginTop: insets.top }]}>
+      <View
+        style={[
+          styles.videoContainer,
+          isTablet ? styles.videoContainerTablet : styles.videoContainerPhone,
+          { marginTop: insets.top },
+        ]}>
         <VideoContainer player={player} isFullscreen={false} onPress={onToggleControls} />
 
         {/* Controls Overlay */}
@@ -154,9 +161,14 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     width: '100%',
-    aspectRatio: 16 / 9,
     backgroundColor: colors.playerBackground,
     position: 'relative',
+  },
+  videoContainerPhone: {
+    aspectRatio: 16 / 9,
+  },
+  videoContainerTablet: {
+    aspectRatio: 2.5,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,
