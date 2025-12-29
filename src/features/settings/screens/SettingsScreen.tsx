@@ -1,19 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Text,
-  Surface,
-  List,
-  Button,
-  Divider,
-  Icon,
-  useTheme,
-} from 'react-native-paper';
+import { Text, Surface, List, Button, Divider, Icon, useTheme } from 'react-native-paper';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
+import { handleSingleCourseResult, handleMultipleCoursesResult } from '@shared/utils/courseAlerts';
 import { TagList } from '@features/tags';
 import { spacing, borderRadius, shadows } from '@shared/theme';
 
@@ -38,7 +30,6 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
 }
 
 export function SettingsScreen() {
-  const router = useRouter();
   const theme = useTheme();
   const { state, addSingleCourse, addMultipleCourses, scanCourses, clearAllCourses } = useCourses();
   const { clearAllProgress, state: progressState } = useProgress();
@@ -53,63 +44,12 @@ export function SettingsScreen() {
 
   const handleAddSingleCourse = async () => {
     const result = await addSingleCourse();
-
-    if (result.cancelled) return;
-
-    if (result.error) {
-      Alert.alert('Error', result.error);
-      return;
-    }
-
-    if (result.noCoursesFound) {
-      Alert.alert(
-        'No Course Found',
-        'No video content was found in this folder. Make sure the folder contains video files (MP4, MOV, M4V).'
-      );
-      return;
-    }
-
-    if (result.added === 0 && result.duplicates > 0) {
-      Alert.alert('Already Added', 'This course is already in your library.');
-      return;
-    }
-
-    if (result.added > 0) {
-      Alert.alert('Course Added', 'The course has been added to your library.');
-    }
+    handleSingleCourseResult(result);
   };
 
   const handleAddMultipleCourses = async () => {
     const result = await addMultipleCourses();
-
-    if (result.cancelled) return;
-
-    if (result.error) {
-      Alert.alert('Error', result.error);
-      return;
-    }
-
-    if (result.noCoursesFound) {
-      Alert.alert(
-        'No Courses Found',
-        'No video courses were found in this folder. Make sure the folder contains video files (MP4, MOV, M4V).'
-      );
-      return;
-    }
-
-    if (result.added === 0 && result.duplicates > 0) {
-      Alert.alert('Already Added', 'These courses are already in your library.');
-      return;
-    }
-
-    if (result.added > 0) {
-      Alert.alert(
-        'Courses Added',
-        `Added ${result.added} course${result.added !== 1 ? 's' : ''}.${
-          result.duplicates > 0 ? ` ${result.duplicates} duplicate${result.duplicates !== 1 ? 's' : ''} skipped.` : ''
-        }`
-      );
-    }
+    handleMultipleCoursesResult(result);
   };
 
   const handleClearProgress = () => {

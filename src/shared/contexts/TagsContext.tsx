@@ -4,13 +4,13 @@ import React, {
   useReducer,
   useCallback,
   useEffect,
-  useRef,
   useMemo,
   ReactNode,
 } from 'react';
 import { Tag, TagsState, TagsAction } from '../types';
 import { storageService } from '../services/storageService';
 import { tagColors } from '../theme/colors';
+import { useDebouncedSave } from '../hooks/useDebouncedSave';
 
 const initialState: TagsState = {
   tags: [],
@@ -120,10 +120,6 @@ const TagsContext = createContext<TagsContextType | undefined>(undefined);
 export function TagsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(tagsReducer, initialState);
 
-  // Refs for debounced save timeouts
-  const saveTagsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const saveCourseTagsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   // Load tags from storage on mount (with cleanup)
   useEffect(() => {
     let isMounted = true;
@@ -142,39 +138,16 @@ export function TagsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Save tags to storage with debounce (reduces battery drain)
-  useEffect(() => {
-    if (state.isLoaded) {
-      if (saveTagsTimeoutRef.current) {
-        clearTimeout(saveTagsTimeoutRef.current);
-      }
-      saveTagsTimeoutRef.current = setTimeout(() => {
-        storageService.saveTags(state.tags);
-      }, 2000); // 2 second debounce
-    }
-    return () => {
-      if (saveTagsTimeoutRef.current) {
-        clearTimeout(saveTagsTimeoutRef.current);
-      }
-    };
-  }, [state.tags, state.isLoaded]);
+  // Memoized save functions for debounced hooks
+  const saveTags = useCallback((tags: Tag[]) => storageService.saveTags(tags), []);
+  const saveCourseTags = useCallback(
+    (courseTags: Record<string, string[]>) => storageService.saveCourseTags(courseTags),
+    []
+  );
 
-  // Save course-tag mappings with debounce
-  useEffect(() => {
-    if (state.isLoaded) {
-      if (saveCourseTagsTimeoutRef.current) {
-        clearTimeout(saveCourseTagsTimeoutRef.current);
-      }
-      saveCourseTagsTimeoutRef.current = setTimeout(() => {
-        storageService.saveCourseTags(state.courseTags);
-      }, 2000); // 2 second debounce
-    }
-    return () => {
-      if (saveCourseTagsTimeoutRef.current) {
-        clearTimeout(saveCourseTagsTimeoutRef.current);
-      }
-    };
-  }, [state.courseTags, state.isLoaded]);
+  // Debounced saves (2 second delay, reduces battery drain)
+  useDebouncedSave(state.tags, saveTags, 2000, state.isLoaded);
+  useDebouncedSave(state.courseTags, saveCourseTags, 2000, state.isLoaded);
 
   const createTag = useCallback(
     async (name: string, color: string): Promise<Tag> => {

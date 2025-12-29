@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { ProgressData, ProgressState, ProgressAction, VideoProgress, Course, Section } from '../types';
 import { storageService } from '../services/storageService';
+import { useDebouncedSave } from '../hooks/useDebouncedSave';
 
 const COMPLETION_THRESHOLD = 0.9; // 90%
 
@@ -64,9 +65,6 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     videosRef.current = state.data.videos;
   }, [state.data.videos]);
 
-  // Ref for debounced save timeout
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   // Load progress from storage on mount (with cleanup)
   useEffect(() => {
     let isMounted = true;
@@ -82,24 +80,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Save progress to storage with 5-second debounce (reduces battery drain)
-  useEffect(() => {
-    if (state.isLoaded) {
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      // Debounce save - only write to storage every 5 seconds
-      saveTimeoutRef.current = setTimeout(() => {
-        storageService.saveProgress(state.data);
-      }, 5000);
-    }
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [state.data, state.isLoaded]);
+  // Memoized save function for debounced hook
+  const saveProgress = useCallback((data: ProgressData) => storageService.saveProgress(data), []);
+
+  // Debounced save (5 second delay, reduces battery drain)
+  useDebouncedSave(state.data, saveProgress, 5000, state.isLoaded);
 
   // Save immediately on unmount to avoid losing progress
   useEffect(() => {

@@ -126,105 +126,81 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
     [state.courses]
   );
 
-  // Add a single course - opens picker, treats selected folder as ONE course
-  const addSingleCourse = useCallback(async (): Promise<AddCoursesResult> => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const folderPath = await fileSystemService.pickFolder();
+  // Helper to process and save new courses (filters duplicates, saves, scans)
+  const processNewCourses = useCallback(
+    async (newCourses: StoredCourse[]): Promise<{ added: number; duplicates: number }> => {
+      const existingIds = new Set(state.storedCourses.map((c) => c.id));
+      const uniqueCourses = newCourses.filter((c) => !existingIds.has(c.id));
+      const duplicatesCount = newCourses.length - uniqueCourses.length;
 
-      // User cancelled folder picker
-      if (!folderPath) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
-      }
-
-      const course = await fileSystemService.analyzeSingleCourse(folderPath);
-
-      // No course content found in selected folder
-      if (!course) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
-      }
-
-      // Check for duplicate
-      const existingIds = new Set(state.storedCourses.map(c => c.id));
-      if (existingIds.has(course.id)) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 1, cancelled: false, noCoursesFound: false, error: null };
-      }
-
-      // Add to stored courses
-      const allStored = [...state.storedCourses, course];
-      await fileSystemService.saveStoredCourses(allStored);
-      dispatch({ type: 'ADD_STORED_COURSES', payload: [course] });
-
-      // Scan the newly added course
-      const scannedNew = await fileSystemService.scanAllCourses([course]);
-      const allCourses = [...state.courses, ...scannedNew];
-      dispatch({ type: 'SET_COURSES', payload: allCourses });
-
-      return { added: 1, duplicates: 0, cancelled: false, noCoursesFound: false, error: null };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add course';
-      dispatch({
-        type: 'SET_ERROR',
-        payload: errorMessage,
-      });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: false, error: errorMessage };
-    }
-  }, [state.storedCourses, state.courses]);
-
-  // Add multiple courses - opens picker, auto-detects courses in folder
-  const addMultipleCourses = useCallback(async (): Promise<AddCoursesResult> => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const folderPath = await fileSystemService.pickFolder();
-
-      // User cancelled folder picker
-      if (!folderPath) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
-      }
-
-      const analysis = await fileSystemService.analyzeMultipleCourses(folderPath);
-
-      // No courses found in selected folder
-      if (analysis.courses.length === 0) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
-      }
-
-      // Filter out duplicates (by ID/path)
-      const existingIds = new Set(state.storedCourses.map(c => c.id));
-      const newCourses = analysis.courses.filter(c => !existingIds.has(c.id));
-      const duplicatesCount = analysis.courses.length - newCourses.length;
-
-      if (newCourses.length > 0) {
-        // Add to stored courses
-        const allStored = [...state.storedCourses, ...newCourses];
+      if (uniqueCourses.length > 0) {
+        const allStored = [...state.storedCourses, ...uniqueCourses];
         await fileSystemService.saveStoredCourses(allStored);
-        dispatch({ type: 'ADD_STORED_COURSES', payload: newCourses });
+        dispatch({ type: 'ADD_STORED_COURSES', payload: uniqueCourses });
 
-        // Scan the newly added courses
-        const scannedNew = await fileSystemService.scanAllCourses(newCourses);
+        const scannedNew = await fileSystemService.scanAllCourses(uniqueCourses);
         const allCourses = [...state.courses, ...scannedNew];
         dispatch({ type: 'SET_COURSES', payload: allCourses });
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
 
-      return { added: newCourses.length, duplicates: duplicatesCount, cancelled: false, noCoursesFound: false, error: null };
+      return { added: uniqueCourses.length, duplicates: duplicatesCount };
+    },
+    [state.storedCourses, state.courses]
+  );
+
+  // Add a single course - opens picker, treats selected folder as ONE course
+  const addSingleCourse = useCallback(async (): Promise<AddCoursesResult> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const folderPath = await fileSystemService.pickFolder();
+      if (!folderPath) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
+      }
+
+      const course = await fileSystemService.analyzeSingleCourse(folderPath);
+      if (!course) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
+      }
+
+      const result = await processNewCourses([course]);
+      return { ...result, cancelled: false, noCoursesFound: false, error: null };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add courses';
-      dispatch({
-        type: 'SET_ERROR',
-        payload: errorMessage,
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add course';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       dispatch({ type: 'SET_LOADING', payload: false });
       return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: false, error: errorMessage };
     }
-  }, [state.storedCourses, state.courses]);
+  }, [processNewCourses]);
+
+  // Add multiple courses - opens picker, auto-detects courses in folder
+  const addMultipleCourses = useCallback(async (): Promise<AddCoursesResult> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const folderPath = await fileSystemService.pickFolder();
+      if (!folderPath) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
+      }
+
+      const analysis = await fileSystemService.analyzeMultipleCourses(folderPath);
+      if (analysis.courses.length === 0) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
+      }
+
+      const result = await processNewCourses(analysis.courses);
+      return { ...result, cancelled: false, noCoursesFound: false, error: null };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add courses';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: false, error: errorMessage };
+    }
+  }, [processNewCourses]);
 
   // Remove a single course
   const removeCourse = useCallback(async (courseId: string): Promise<RemoveCourseResult> => {
