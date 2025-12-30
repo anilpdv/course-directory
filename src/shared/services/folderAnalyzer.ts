@@ -101,7 +101,8 @@ export async function isSectionFolder(
  */
 export async function analyzeSingleCourse(
   folderPath: string,
-  utils: FolderAnalyzerUtils
+  utils: FolderAnalyzerUtils,
+  iosBookmark?: string
 ): Promise<StoredCourse | null> {
   try {
     const folder = new Directory(folderPath);
@@ -121,6 +122,8 @@ export async function analyzeSingleCourse(
       folderPath: folderPath,
       addedAt: Date.now(),
       icon: getRandomCourseIcon(),
+      iosBookmark,
+      bookmarkStatus: iosBookmark ? 'valid' : 'missing',
     };
   } catch (error) {
     console.error('Error analyzing single course:', error);
@@ -131,16 +134,23 @@ export async function analyzeSingleCourse(
 /**
  * Analyze a folder to determine if it contains single or multiple courses
  * Used for "Add Multiple Courses" - auto-detects structure
+ * Note: When picking a parent folder, the iOS bookmark grants access to all child folders
  */
 export async function analyzeMultipleCourses(
   folderPath: string,
-  utils: FolderAnalyzerUtils
+  utils: FolderAnalyzerUtils,
+  iosBookmark?: string
 ): Promise<{ type: 'single' | 'multiple'; courses: StoredCourse[] }> {
   try {
     const folder = new Directory(folderPath);
     if (!folder.exists) {
       return { type: 'single', courses: [] };
     }
+
+    const bookmarkFields = {
+      iosBookmark,
+      bookmarkStatus: (iosBookmark ? 'valid' : 'missing') as 'valid' | 'missing',
+    };
 
     // Check if folder itself has videos (single course with flat structure)
     const directVideos = await hasVideosInFolder(folder, utils.getItemName);
@@ -154,6 +164,7 @@ export async function analyzeMultipleCourses(
             folderPath: folderPath,
             addedAt: Date.now(),
             icon: getRandomCourseIcon(),
+            ...bookmarkFields,
           },
         ],
       };
@@ -196,12 +207,14 @@ export async function analyzeMultipleCourses(
             folderPath: folderPath,
             addedAt: Date.now(),
             icon: getRandomCourseIcon(),
+            ...bookmarkFields,
           },
         ],
       };
     }
 
     // Otherwise, treat each subfolder with course content as a separate course
+    // Note: All child courses share the parent folder's bookmark
     const potentialCourses: StoredCourse[] = [];
     for (const item of contents) {
       const itemName = utils.getItemName(item);
@@ -216,6 +229,7 @@ export async function analyzeMultipleCourses(
             folderPath: subDir.uri,
             addedAt: Date.now(),
             icon: getRandomCourseIcon(),
+            ...bookmarkFields,
           });
         }
       }

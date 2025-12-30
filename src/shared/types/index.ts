@@ -62,6 +62,10 @@ export interface StoredCourse {
   folderPath: string;
   addedAt: number;
   icon: string;
+  // iOS security-scoped bookmark for persistent folder access
+  iosBookmark?: string;
+  // Bookmark health status
+  bookmarkStatus?: 'valid' | 'expired' | 'missing';
 }
 
 // Course context state

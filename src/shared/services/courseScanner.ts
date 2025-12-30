@@ -3,10 +3,12 @@
  * Extracted from fileSystemService for better maintainability
  */
 
+import { Platform } from 'react-native';
 import { File, Directory } from 'expo-file-system/next';
 import { Course, Section, Video, VideoFormat, StoredCourse } from '../types';
 import { getRandomCourseIcon } from '../utils/courseIcons';
 import { createContentSorter } from '../utils/sortingUtils';
+import { resolveBookmark } from '../../../modules/bookmark-resolver';
 
 // Supported video extensions
 const SUPPORTED_VIDEO_EXTENSIONS = ['mp4', 'mov', 'm4v'];
@@ -195,6 +197,26 @@ export async function scanSingleCourse(
   utils: CourseScannerUtils
 ): Promise<Course | null> {
   try {
+    // iOS: Resolve bookmark to restore security-scoped access before scanning
+    if (Platform.OS === 'ios') {
+      if (storedCourse.iosBookmark) {
+        const success = await resolveBookmark(storedCourse.iosBookmark);
+        if (!success) {
+          console.warn(
+            `Failed to resolve bookmark for "${storedCourse.name}" - folder may need to be re-added`
+          );
+          return null;
+        }
+        console.log(`[CourseScanner] Resolved bookmark for "${storedCourse.name}"`);
+      } else {
+        // No bookmark - course was added before bookmark support
+        console.warn(
+          `Course "${storedCourse.name}" has no iOS bookmark - please re-add for persistent access`
+        );
+        // Continue anyway - might work if app hasn't been restarted
+      }
+    }
+
     const courseDir = new Directory(storedCourse.folderPath);
     if (!courseDir.exists) {
       console.warn(`Course folder not found: "${storedCourse.name}" - it may have been moved or deleted`);
@@ -216,8 +238,15 @@ export async function scanSingleCourse(
   } catch (error) {
     // Handle permission errors gracefully
     const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes('permission')) {
-      console.warn(`Permission denied for "${storedCourse.name}" - folder may need to be re-added`);
+    if (errorMessage.includes('permission') || errorMessage.includes('Operation not permitted')) {
+      // On iOS, permission errors often mean the bookmark is missing or expired
+      if (Platform.OS === 'ios' && !storedCourse.iosBookmark) {
+        console.warn(
+          `Permission denied for "${storedCourse.name}" - this course was added before bookmark support, please re-add it`
+        );
+      } else {
+        console.warn(`Permission denied for "${storedCourse.name}" - folder may need to be re-added`);
+      }
     } else {
       console.error(`Error scanning course "${storedCourse.name}":`, error);
     }

@@ -3,10 +3,12 @@
  * Main facade for file system operations, delegating to specialized modules
  */
 
+import { Platform } from 'react-native';
 import { File, Directory } from 'expo-file-system/next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Course, StoredCourse } from '../types';
 import { getRandomCourseIcon } from '../utils/courseIcons';
+import { folderPickerService, FolderPickResult } from './folderPickerService';
 import {
   analyzeSingleCourse as analyzeFolder,
   analyzeMultipleCourses as analyzeFolders,
@@ -33,14 +35,12 @@ class FileSystemService {
 
   // === Folder Picker ===
 
-  async pickFolder(): Promise<string | null> {
-    try {
-      const directory = await Directory.pickDirectoryAsync();
-      return directory ? directory.uri : null;
-    } catch (error) {
-      console.error('Error picking folder:', error);
-      return null;
-    }
+  async pickFolder(): Promise<FolderPickResult | null> {
+    return folderPickerService.pickFolder();
+  }
+
+  async releaseFolderAccess(uri: string): Promise<void> {
+    await folderPickerService.releaseFolderAccess(uri);
   }
 
   // === Storage Operations ===
@@ -52,11 +52,17 @@ class FileSystemService {
         const parsed = JSON.parse(data);
         const courses: StoredCourse[] = parsed.courses || [];
 
-        // Migrate existing courses without icons
+        // Migrate existing courses
         let needsSave = false;
         for (const course of courses) {
+          // Migrate courses without icons
           if (!course.icon) {
             course.icon = getRandomCourseIcon();
+            needsSave = true;
+          }
+          // Mark iOS courses without bookmarks as needing refresh
+          if (Platform.OS === 'ios' && !course.iosBookmark && !course.bookmarkStatus) {
+            course.bookmarkStatus = 'missing';
             needsSave = true;
           }
         }
@@ -110,14 +116,15 @@ class FileSystemService {
 
   // === Folder Analysis (delegated to folderAnalyzer) ===
 
-  async analyzeSingleCourse(folderPath: string): Promise<StoredCourse | null> {
-    return analyzeFolder(folderPath, this.utils);
+  async analyzeSingleCourse(folderPath: string, iosBookmark?: string): Promise<StoredCourse | null> {
+    return analyzeFolder(folderPath, this.utils, iosBookmark);
   }
 
   async analyzeMultipleCourses(
-    folderPath: string
+    folderPath: string,
+    iosBookmark?: string
   ): Promise<{ type: 'single' | 'multiple'; courses: StoredCourse[] }> {
-    return analyzeFolders(folderPath, this.utils);
+    return analyzeFolders(folderPath, this.utils, iosBookmark);
   }
 
   // Alias for backward compatibility (migration)
@@ -192,3 +199,6 @@ class FileSystemService {
 }
 
 export const fileSystemService = new FileSystemService();
+
+// Re-export types for convenience
+export type { FolderPickResult } from './folderPickerService';

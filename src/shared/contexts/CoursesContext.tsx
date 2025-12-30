@@ -154,13 +154,14 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
   const addSingleCourse = useCallback(async (): Promise<AddCoursesResult> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const folderPath = await fileSystemService.pickFolder();
-      if (!folderPath) {
+      const pickResult = await fileSystemService.pickFolder();
+      if (!pickResult) {
         dispatch({ type: 'SET_LOADING', payload: false });
         return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
       }
 
-      const course = await fileSystemService.analyzeSingleCourse(folderPath);
+      // Pass the iOS bookmark for persistent access
+      const course = await fileSystemService.analyzeSingleCourse(pickResult.uri, pickResult.iosBookmark);
       if (!course) {
         dispatch({ type: 'SET_LOADING', payload: false });
         return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
@@ -180,13 +181,14 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
   const addMultipleCourses = useCallback(async (): Promise<AddCoursesResult> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const folderPath = await fileSystemService.pickFolder();
-      if (!folderPath) {
+      const pickResult = await fileSystemService.pickFolder();
+      if (!pickResult) {
         dispatch({ type: 'SET_LOADING', payload: false });
         return { added: 0, duplicates: 0, cancelled: true, noCoursesFound: false, error: null };
       }
 
-      const analysis = await fileSystemService.analyzeMultipleCourses(folderPath);
+      // Pass the iOS bookmark for persistent access to all courses in the folder
+      const analysis = await fileSystemService.analyzeMultipleCourses(pickResult.uri, pickResult.iosBookmark);
       if (analysis.courses.length === 0) {
         dispatch({ type: 'SET_LOADING', payload: false });
         return { added: 0, duplicates: 0, cancelled: false, noCoursesFound: true, error: null };
@@ -205,6 +207,14 @@ export function CoursesProvider({ children }: { children: ReactNode }) {
   // Remove a single course
   const removeCourse = useCallback(async (courseId: string): Promise<RemoveCourseResult> => {
     try {
+      // Find the course to release its folder access
+      const courseToRemove = state.storedCourses.find(c => c.id === courseId);
+
+      // Release folder access on Android (SAF cleanup)
+      if (courseToRemove) {
+        await fileSystemService.releaseFolderAccess(courseToRemove.folderPath);
+      }
+
       const filtered = state.storedCourses.filter(c => c.id !== courseId);
       await fileSystemService.saveStoredCourses(filtered);
       dispatch({ type: 'REMOVE_STORED_COURSE', payload: courseId });

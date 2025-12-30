@@ -9,8 +9,10 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "bookmark-resolver": "file:./modules/bookmark-resolver",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-documents/picker": "^11.0.3",
     "expo": "~54.0.30",
     "expo-constants": "~18.0.12",
     "expo-document-picker": "~14.0.8",
