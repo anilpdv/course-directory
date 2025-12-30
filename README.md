@@ -1,29 +1,53 @@
-# CourseViewer
+<p align="center">
+  <img src="assets/icon.png" width="100" alt="CourseViewer"/>
+</p>
 
-A local video course player for iOS and iPad. Import courses from your device, track progress, and pick up where you left off.
+<h1 align="center">CourseViewer</h1>
+
+<p align="center">
+  A local video course player for iOS and iPad.<br/>
+  Import courses from your device, track progress, and pick up where you left off.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-iOS%20%7C%20iPadOS-007AFF?style=flat-square" alt="Platform"/>
+  <img src="https://img.shields.io/badge/Expo-54-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo"/>
+  <img src="https://img.shields.io/badge/React%20Native-0.81-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React Native"/>
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+</p>
+
+---
 
 ## Screenshots
 
 ### iPad
 
 <p align="center">
-  <img src="assets/screenshots/ipad-welcome.png" width="400"/>
-  <img src="assets/screenshots/ipad-courses-list.png" width="400"/>
+  <img src="assets/screenshots/ipad-welcome.png" width="380"/>
+  &nbsp;&nbsp;
+  <img src="assets/screenshots/ipad-courses-list.png" width="380"/>
 </p>
 <p align="center">
-  <img src="assets/screenshots/ipad-course-detail.png" width="400"/>
-  <img src="assets/screenshots/ipad-player.png" width="400"/>
+  <img src="assets/screenshots/ipad-course-detail.png" width="380"/>
+  &nbsp;&nbsp;
+  <img src="assets/screenshots/ipad-player.png" width="380"/>
 </p>
 
 ### iPhone
 
 <p align="center">
-  <img src="assets/screenshots/iphone-welcome.png" width="150"/>
-  <img src="assets/screenshots/iphone-courses-list.png" width="150"/>
-  <img src="assets/screenshots/iphone-course-detail.png" width="150"/>
-  <img src="assets/screenshots/iphone-player.png" width="150"/>
-  <img src="assets/screenshots/iphone-settings.png" width="150"/>
+  <img src="assets/screenshots/iphone-welcome.png" width="140"/>
+  &nbsp;
+  <img src="assets/screenshots/iphone-courses-list.png" width="140"/>
+  &nbsp;
+  <img src="assets/screenshots/iphone-course-detail.png" width="140"/>
+  &nbsp;
+  <img src="assets/screenshots/iphone-player.png" width="140"/>
+  &nbsp;
+  <img src="assets/screenshots/iphone-settings.png" width="140"/>
 </p>
+
+---
 
 ## Features
 
@@ -34,7 +58,9 @@ A local video course player for iOS and iPad. Import courses from your device, t
 - Playback speed control (0.5x - 2x)
 - Fullscreen landscape mode
 - Section-based course organization
-- Works offline
+- Works completely offline
+
+---
 
 ## Build for iOS
 
@@ -42,7 +68,7 @@ A local video course player for iOS and iPad. Import courses from your device, t
 
 - macOS
 - Node.js 18+
-- Xcode 15+ (install from App Store)
+- Xcode 15+ (from App Store)
 - Apple Developer account (free or paid)
 
 ### 1. Clone and Install
@@ -65,32 +91,30 @@ npx pod-install
 npm run ios
 ```
 
-This opens the app in the iOS Simulator.
-
 ### 4. Build for Physical Device
 
 1. Open `ios/CourseViewer.xcworkspace` in Xcode
-2. Select your connected iPhone/iPad as the target device
-3. Go to **Signing & Capabilities**
-4. Select your Team (Apple Developer account)
-5. Click the Play button to build and run
+2. Select your connected iPhone/iPad as the target
+3. Go to **Signing & Capabilities** → Select your Team
+4. Click **Play** to build and run
 
-> Note: First build requires trusting the developer certificate on your device. Go to **Settings > General > VPN & Device Management** and trust your developer certificate.
+> **Note:** First build requires trusting the developer certificate on your device:
+> Settings → General → VPN & Device Management → Trust certificate
 
-### 5. TestFlight Distribution (Optional)
-
-To share with others via TestFlight:
-
-1. In Xcode, select **Product > Archive**
-2. Once archived, click **Distribute App**
-3. Select **App Store Connect** > **Upload**
-4. Log into App Store Connect
-5. Go to **TestFlight** and add testers by email
+---
 
 ## Tech Stack
 
-- React Native / Expo
-- expo-video
-- expo-file-system
-- react-native-paper (Material Design 3)
-- AsyncStorage for persistence
+| | |
+|---|---|
+| **Framework** | React Native / Expo |
+| **Video** | expo-video |
+| **File System** | expo-file-system |
+| **UI** | React Native Paper (Material Design 3) |
+| **Storage** | AsyncStorage |
+
+---
+
+<p align="center">
+  Made for learning on the go
+</p>
