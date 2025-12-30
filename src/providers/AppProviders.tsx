@@ -5,6 +5,7 @@ import { paperTheme } from '@shared/theme';
 import { CoursesProvider } from '@shared/contexts/CoursesContext';
 import { ProgressProvider } from '@shared/contexts/ProgressContext';
 import { TagsProvider } from '@shared/contexts/TagsContext';
+import { StatisticsProvider } from '@features/statistics';
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -17,7 +18,9 @@ export function AppProviders({ children }: AppProvidersProps) {
         <CoursesProvider>
           <ProgressProvider>
             <TagsProvider>
-              {children}
+              <StatisticsProvider>
+                {children}
+              </StatisticsProvider>
             </TagsProvider>
           </ProgressProvider>
         </CoursesProvider>

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Surface, List, Button, Divider, Icon, useTheme } from 'react-native-paper';
+import { useRouter } from 'expo-router';
 import { useCourses } from '@shared/contexts/CoursesContext';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
+import { useStatistics } from '@features/statistics';
 import { handleSingleCourseResult, handleMultipleCoursesResult, withCount } from '@shared/utils';
 import { TagList } from '@features/tags';
 import { spacing, borderRadius, shadows } from '@shared/theme';
@@ -31,9 +33,11 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
 
 export function SettingsScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { state, addSingleCourse, addMultipleCourses, scanCourses, clearAllCourses } = useCourses();
   const { clearAllProgress, state: progressState } = useProgress();
   const { state: tagsState, clearAllTags } = useTags();
+  const { state: statisticsState } = useStatistics();
   const [isClearing, setIsClearing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [tagListVisible, setTagListVisible] = useState(false);
@@ -41,6 +45,7 @@ export function SettingsScreen() {
   const { courses } = state;
   const progressCount = Object.keys(progressState.data.videos).length;
   const tagCount = tagsState.tags.length;
+  const totalWatchMinutes = Math.round(statisticsState.data.totalWatchTimeSeconds / 60);
 
   const handleAddSingleCourse = async () => {
     const result = await addSingleCourse();
@@ -143,6 +148,23 @@ export function SettingsScreen() {
             )}
             right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
             onPress={() => setTagListVisible(true)}
+            titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
+            descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
+          />
+        </SettingsSection>
+
+        {/* Statistics Section */}
+        <SettingsSection title="Statistics">
+          <List.Item
+            title="Learning Statistics"
+            description={`${totalWatchMinutes} min watched • ${statisticsState.data.currentStreak} day streak`}
+            left={() => (
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon source="chart-bar" size={22} color={theme.colors.primary} />
+              </View>
+            )}
+            right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
+            onPress={() => router.push('/statistics')}
             titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
             descriptionStyle={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
           />

@@ -129,5 +129,34 @@ export interface TagFilter {
   filterMode: 'any' | 'all';
 }
 
+// Learning Statistics
+export interface DailyStats {
+  date: string; // YYYY-MM-DD
+  watchTimeSeconds: number;
+  videosCompleted: number;
+}
+
+export interface StatisticsData {
+  totalWatchTimeSeconds: number;
+  totalVideosCompleted: number;
+  totalCoursesCompleted: number;
+  dailyStats: Record<string, DailyStats>; // date -> stats
+  currentStreak: number;
+  longestStreak: number;
+  lastWatchDate: string | null;
+}
+
+export interface StatisticsState {
+  data: StatisticsData;
+  isLoaded: boolean;
+}
+
+export type StatisticsAction =
+  | { type: 'LOAD_STATISTICS'; payload: StatisticsData }
+  | { type: 'UPDATE_WATCH_TIME'; payload: { seconds: number; date: string } }
+  | { type: 'INCREMENT_VIDEOS_COMPLETED'; payload: { date: string } }
+  | { type: 'UPDATE_COURSES_COMPLETED'; payload: number }
+  | { type: 'CLEAR_STATISTICS' };
+
 // Result type for error handling
 export { Result, success, failure } from './result';

@@ -3,8 +3,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProgress } from '@shared/contexts/ProgressContext';
+import { useStatistics } from '@features/statistics';
 import { VideoPlayerParams } from '../types';
-import { PLAYBACK_RATES, SEEK_AMOUNT } from '../constants';
+import { SEEK_AMOUNT } from '../constants';
 
 // Hooks
 import { usePlayerInit } from '../hooks/usePlayerInit';
@@ -24,6 +25,7 @@ export function VideoPlayerScreen() {
   const params = useLocalSearchParams() as unknown as VideoPlayerParams;
   const insets = useSafeAreaInsets();
   const { updateVideoProgress, getVideoProgress } = useProgress();
+  const { addWatchTime } = useStatistics();
 
   // Keep screen awake during playback
   useKeepAwake();
@@ -61,6 +63,8 @@ export function VideoPlayerScreen() {
     player,
     videoId: params.videoId,
     updateVideoProgress,
+    onWatchTimeUpdate: addWatchTime,
+    isPlaying,
   });
 
   // Controls visibility (auto-hide)

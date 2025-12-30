@@ -1,21 +1,24 @@
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View, StyleSheet } from "react-native";
-import { IconButton } from "react-native-paper";
+import { View, StyleSheet, Pressable } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AppProviders } from "../src/providers/AppProviders";
 import { colors } from "../src/shared/theme/colors";
 
 function SettingsButton() {
   const router = useRouter();
   return (
-    <IconButton
-      icon="cog-outline"
-      iconColor={colors.primary}
-      size={24}
+    <Pressable
       onPress={() => router.push("/settings")}
-      style={{ margin: 0 }}
-      containerColor="transparent"
-    />
+      hitSlop={8}
+      style={{ marginLeft: 4 }}
+    >
+      <MaterialCommunityIcons
+        name="cog-outline"
+        size={28}
+        color={colors.primary}
+      />
+    </Pressable>
   );
 }
 
@@ -43,6 +46,7 @@ export default function RootLayout() {
             name="index"
             options={{
               title: "My Courses",
+              headerBlurEffect: "none",
               headerRight: () => <SettingsButton />,
             }}
           />
@@ -64,6 +68,12 @@ export default function RootLayout() {
             name="settings"
             options={{
               title: "Settings",
+            }}
+          />
+          <Stack.Screen
+            name="statistics"
+            options={{
+              title: "Learning Statistics",
             }}
           />
         </Stack>

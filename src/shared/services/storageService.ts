@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ProgressData, AppSettings, Tag } from '../types';
+import { ProgressData, AppSettings, Tag, StatisticsData } from '../types';
 
 const KEYS = {
   PROGRESS: '@courseviewer/progress',
@@ -7,6 +7,8 @@ const KEYS = {
   LAST_PLAYED: '@courseviewer/last_played',
   TAGS: '@courseviewer/tags',
   COURSE_TAGS: '@courseviewer/course_tags',
+  RECENT_SEARCHES: '@courseviewer/recent_searches',
+  STATISTICS: '@courseviewer/statistics',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -127,6 +129,79 @@ class StorageService {
       await AsyncStorage.multiRemove([KEYS.TAGS, KEYS.COURSE_TAGS]);
     } catch (error) {
       console.error('Failed to clear tags data:', error);
+    }
+  }
+
+  // Recent searches storage methods
+  async getRecentSearches(): Promise<string[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.RECENT_SEARCHES);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Failed to load recent searches:', error);
+      return [];
+    }
+  }
+
+  async saveRecentSearches(searches: string[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.RECENT_SEARCHES, JSON.stringify(searches));
+    } catch (error) {
+      console.error('Failed to save recent searches:', error);
+    }
+  }
+
+  async clearRecentSearches(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(KEYS.RECENT_SEARCHES);
+    } catch (error) {
+      console.error('Failed to clear recent searches:', error);
+    }
+  }
+
+  // Statistics storage methods
+  async getStatistics(): Promise<StatisticsData> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.STATISTICS);
+      if (data) {
+        return JSON.parse(data);
+      }
+      return {
+        totalWatchTimeSeconds: 0,
+        totalVideosCompleted: 0,
+        totalCoursesCompleted: 0,
+        dailyStats: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        lastWatchDate: null,
+      };
+    } catch (error) {
+      console.error('Failed to load statistics:', error);
+      return {
+        totalWatchTimeSeconds: 0,
+        totalVideosCompleted: 0,
+        totalCoursesCompleted: 0,
+        dailyStats: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        lastWatchDate: null,
+      };
+    }
+  }
+
+  async saveStatistics(statistics: StatisticsData): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.STATISTICS, JSON.stringify(statistics));
+    } catch (error) {
+      console.error('Failed to save statistics:', error);
+    }
+  }
+
+  async clearStatistics(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(KEYS.STATISTICS);
+    } catch (error) {
+      console.error('Failed to clear statistics:', error);
     }
   }
 }

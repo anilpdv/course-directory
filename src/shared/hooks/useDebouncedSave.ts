@@ -16,6 +16,13 @@ export function useDebouncedSave<T>(
   isReady: boolean
 ): void {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dataRef = useRef(data);
+  const isPendingRef = useRef(false);
+  const saveFunctionRef = useRef(saveFunction);
+
+  // Direct assignment - no useEffect needed for refs
+  dataRef.current = data;
+  saveFunctionRef.current = saveFunction;
 
   useEffect(() => {
     if (isReady) {
@@ -24,9 +31,13 @@ export function useDebouncedSave<T>(
         clearTimeout(timeoutRef.current);
       }
 
+      // Mark save as pending
+      isPendingRef.current = true;
+
       // Set new debounced save
       timeoutRef.current = setTimeout(() => {
         saveFunction(data);
+        isPendingRef.current = false;
       }, delay);
     }
 
@@ -37,4 +48,13 @@ export function useDebouncedSave<T>(
       }
     };
   }, [data, saveFunction, delay, isReady]);
+
+  // Flush pending save on unmount
+  useEffect(() => {
+    return () => {
+      if (isPendingRef.current) {
+        saveFunctionRef.current(dataRef.current);
+      }
+    };
+  }, []);
 }

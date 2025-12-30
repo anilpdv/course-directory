@@ -12,7 +12,10 @@ import { CourseCardSkeleton } from '../components/CourseCardSkeleton';
 import { EmptyCoursesView } from '../components/EmptyCoursesView';
 import { WelcomeScreen } from '../components/WelcomeScreen';
 import { TagFilterDrawer, useTagFilter } from '@features/tags';
-import { spacing } from '@shared/theme';
+import { ContinueWatchingSection } from '@features/continue-watching';
+import { useSearch, useRecentSearches, SearchResults, SearchResult } from '@features/search';
+import { Searchbar } from 'react-native-paper';
+import { spacing, borderRadius, colors } from '@shared/theme';
 
 export function CoursesListScreen() {
   const router = useRouter();
@@ -21,6 +24,15 @@ export function CoursesListScreen() {
   const { courses, isLoading, error, hasCourses } = state;
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+
+  // Search state
+  const { query, setQuery, results, isSearching, hasResults, clearSearch } = useSearch(courses);
+  const {
+    recentSearches,
+    addRecentSearch,
+    removeRecentSearch,
+    clearRecentSearches,
+  } = useRecentSearches();
 
   const { isTablet, width } = useDeviceType();
   const numColumns = isTablet ? 3 : 1;
@@ -80,6 +92,41 @@ export function CoursesListScreen() {
     }
   }, [removeCourse]);
 
+  // Handle search result selection
+  const handleSearchResultSelect = useCallback(
+    (result: SearchResult) => {
+      // Add to recent searches
+      addRecentSearch(query);
+      clearSearch();
+
+      if (result.type === 'course') {
+        router.push(`/course/${result.course.id}`);
+      } else if (result.type === 'section') {
+        router.push(`/course/${result.course.id}`);
+      } else if (result.type === 'video' && result.video && result.section) {
+        router.push({
+          pathname: '/player/[videoId]',
+          params: {
+            videoId: result.video.id,
+            courseId: result.course.id,
+            sectionId: result.section.id,
+            videoPath: result.video.filePath,
+            videoName: result.video.name,
+          },
+        });
+      }
+    },
+    [router, query, addRecentSearch, clearSearch]
+  );
+
+  // Handle recent search selection
+  const handleRecentSearchSelect = useCallback(
+    (term: string) => {
+      setQuery(term);
+    },
+    [setQuery]
+  );
+
   const renderCourse = useCallback(
     ({ item, index }: { item: Course; index: number }) => (
       <CourseCard
@@ -131,30 +178,37 @@ export function CoursesListScreen() {
     );
   }
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-        {hasActiveFilters
-          ? `${filteredCourses.length} of ${courses.length} courses`
-          : `${withCount(courses.length, 'course')} in your library`}
-      </Text>
-      <View style={styles.filterButtonContainer}>
-        <IconButton
-          icon="filter-variant"
-          size={24}
-          onPress={() => setFilterDrawerVisible(true)}
-          iconColor={hasActiveFilters ? theme.colors.primary : theme.colors.onSurfaceVariant}
-        />
-        {hasActiveFilters && (
-          <Badge
-            size={16}
-            style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}
-          >
-            {selectedTagIds.length}
-          </Badge>
-        )}
+  // Header for FlatList (without search bar - search bar is now outside)
+  const renderListHeader = () => (
+    <>
+      {/* Continue Watching Section */}
+      <ContinueWatchingSection courses={courses} />
+
+      {/* Course count and filter header */}
+      <View style={styles.header}>
+        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+          {hasActiveFilters
+            ? `${filteredCourses.length} of ${courses.length} courses`
+            : `${withCount(courses.length, 'course')} in your library`}
+        </Text>
+        <View style={styles.filterButtonContainer}>
+          <IconButton
+            icon="filter-variant"
+            size={24}
+            onPress={() => setFilterDrawerVisible(true)}
+            iconColor={hasActiveFilters ? theme.colors.primary : theme.colors.onSurfaceVariant}
+          />
+          {hasActiveFilters && (
+            <Badge
+              size={16}
+              style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}
+            >
+              {selectedTagIds.length}
+            </Badge>
+          )}
+        </View>
       </View>
-    </View>
+    </>
   );
 
   // Main list view
@@ -179,59 +233,88 @@ export function CoursesListScreen() {
         </View>
       ) : (
         <>
-          <FlatList
-            key={numColumns}
-            data={filteredCourses}
-            keyExtractor={keyExtractor}
-            renderItem={renderCourse}
-            numColumns={numColumns}
-            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
-            ListHeaderComponent={courses.length > 0 ? renderHeader : null}
-            // Performance optimizations
-            windowSize={5}
-            maxToRenderPerBatch={10}
-            removeClippedSubviews={true}
-            initialNumToRender={10}
-            ListEmptyComponent={
-              hasActiveFilters ? (
-                <View style={styles.noResultsContainer}>
-                  <Icon source="filter-off" size={48} color={theme.colors.onSurfaceVariant} />
-                  <Text
-                    variant="bodyLarge"
-                    style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}
-                  >
-                    No courses match your filters
-                  </Text>
-                  <Button
-                    mode="outlined"
-                    onPress={clearFilters}
-                    style={{ marginTop: 16 }}
-                  >
-                    Clear Filters
-                  </Button>
-                </View>
-              ) : (
-                <EmptyCoursesView
-                onRescan={scanCourses}
-                onAddCourse={handleAddSingleCourse}
-                onAddMultipleCourses={handleAddMultipleCourses}
-              />
-              )
-            }
-            contentContainerStyle={[
-              styles.listContent,
-              filteredCourses.length === 0 && styles.listContentEmpty,
-            ]}
-            refreshControl={
-              <RefreshControl
-                refreshing={isLoading}
-                onRefresh={scanCourses}
-                tintColor={theme.colors.primary}
-                colors={[theme.colors.primary]}
-              />
-            }
-          />
-          {courses.length > 0 && (
+          {/* Search bar always visible - never remounts */}
+          <View style={styles.searchContainer}>
+            <Searchbar
+              placeholder="Search courses, sections, videos..."
+              onChangeText={setQuery}
+              value={query}
+              style={[styles.searchBar, { backgroundColor: theme.colors.surfaceVariant }]}
+              inputStyle={{ color: theme.colors.onSurface }}
+              iconColor={theme.colors.onSurfaceVariant}
+              placeholderTextColor={theme.colors.onSurfaceVariant}
+            />
+          </View>
+
+          {/* Conditionally show search results or course list */}
+          {isSearching ? (
+            <SearchResults
+              results={results}
+              isSearching={isSearching}
+              hasQuery={query.length > 0}
+              recentSearches={recentSearches}
+              onSelectRecentSearch={handleRecentSearchSelect}
+              onRemoveRecentSearch={removeRecentSearch}
+              onClearRecentSearches={clearRecentSearches}
+              onResultSelect={handleSearchResultSelect}
+            />
+          ) : (
+            <FlatList
+              key={numColumns}
+              data={filteredCourses}
+              keyExtractor={keyExtractor}
+              renderItem={renderCourse}
+              numColumns={numColumns}
+              columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
+              ListHeaderComponent={courses.length > 0 ? renderListHeader : null}
+              // Performance optimizations
+              windowSize={5}
+              maxToRenderPerBatch={10}
+              removeClippedSubviews={true}
+              initialNumToRender={10}
+              ListEmptyComponent={
+                hasActiveFilters ? (
+                  <View style={styles.noResultsContainer}>
+                    <Icon source="filter-off" size={48} color={theme.colors.onSurfaceVariant} />
+                    <Text
+                      variant="bodyLarge"
+                      style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}
+                    >
+                      No courses match your filters
+                    </Text>
+                    <Button
+                      mode="outlined"
+                      onPress={clearFilters}
+                      style={{ marginTop: 16 }}
+                    >
+                      Clear Filters
+                    </Button>
+                  </View>
+                ) : (
+                  <EmptyCoursesView
+                    onRescan={scanCourses}
+                    onAddCourse={handleAddSingleCourse}
+                    onAddMultipleCourses={handleAddMultipleCourses}
+                  />
+                )
+              }
+              contentContainerStyle={[
+                styles.listContent,
+                filteredCourses.length === 0 && styles.listContentEmpty,
+              ]}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isLoading}
+                  onRefresh={scanCourses}
+                  tintColor={theme.colors.primary}
+                  colors={[theme.colors.primary]}
+                />
+              }
+            />
+          )}
+
+          {/* FAB and TagFilter are always available */}
+          {courses.length > 0 && !isSearching && (
             <FAB.Group
               open={fabOpen}
               visible
@@ -281,6 +364,18 @@ const styles = StyleSheet.create({
   },
   skeletonList: {
     flex: 1,
+  },
+  searchContainer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  searchBar: {
+    elevation: 0,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 52,
   },
   header: {
     flexDirection: 'row',

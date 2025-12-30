@@ -21,7 +21,7 @@ function NextVideoOverlayComponent({
 }: NextVideoOverlayProps) {
   const positionStyle = isFullscreen
     ? { right: insets.right + 24, bottom: 100 }
-    : { right: 16, bottom: 50 };
+    : { right: 16, bottom: 80 };
 
   return (
     <View style={[styles.container, positionStyle]}>
