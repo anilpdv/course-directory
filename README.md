@@ -20,19 +20,6 @@
 
 ## Screenshots
 
-### iPad
-
-<p align="center">
-  <img src="assets/screenshots/ipad-welcome.png" width="380"/>
-  &nbsp;&nbsp;
-  <img src="assets/screenshots/ipad-courses-list.png" width="380"/>
-</p>
-<p align="center">
-  <img src="assets/screenshots/ipad-course-detail.png" width="380"/>
-  &nbsp;&nbsp;
-  <img src="assets/screenshots/ipad-player.png" width="380"/>
-</p>
-
 ### iPhone
 
 <p align="center">
@@ -45,6 +32,19 @@
   <img src="assets/screenshots/iphone-player.png" width="140"/>
   &nbsp;
   <img src="assets/screenshots/iphone-settings.png" width="140"/>
+</p>
+
+### iPad
+
+<p align="center">
+  <img src="assets/screenshots/ipad-welcome.png" width="380"/>
+  &nbsp;&nbsp;
+  <img src="assets/screenshots/ipad-courses-list.png" width="380"/>
+</p>
+<p align="center">
+  <img src="assets/screenshots/ipad-course-detail.png" width="380"/>
+  &nbsp;&nbsp;
+  <img src="assets/screenshots/ipad-player.png" width="380"/>
 </p>
 
 ---
