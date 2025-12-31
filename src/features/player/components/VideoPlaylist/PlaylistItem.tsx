@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text, IconButton, Icon, useTheme } from 'react-native-paper';
 import { Video, VideoProgress } from '@shared/types';
-import { progressBarHeights, fontWeights } from '@shared/theme';
+import { progressBarHeights, fontWeights, colors } from '@shared/theme';
 
 interface PlaylistItemProps {
   video: Video;
@@ -35,7 +35,7 @@ function PlaylistItemComponent({
     >
       <View style={styles.leftSection}>
         {isComplete ? (
-          <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
+          <View style={[styles.badge, { backgroundColor: colors.complete }]}>
             <Icon source="check" size={14} color={theme.colors.onPrimary} />
           </View>
         ) : isCurrentVideo ? (
@@ -71,7 +71,7 @@ function PlaylistItemComponent({
                   styles.progressFill,
                   {
                     width: `${progress.percentComplete}%`,
-                    backgroundColor: theme.colors.primary,
+                    backgroundColor: colors.progressFill,
                   },
                 ]}
               />
@@ -84,7 +84,7 @@ function PlaylistItemComponent({
         <IconButton
           icon="play-circle-outline"
           size={24}
-          iconColor={theme.colors.primary}
+          iconColor={colors.iconDefault}
           onPress={() => onSelect(video)}
           accessibilityLabel={`Play ${video.name}`}
         />

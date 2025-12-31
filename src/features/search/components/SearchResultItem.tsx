@@ -40,7 +40,7 @@ function SearchResultItemComponent({ result, onPress }: SearchResultItemProps) {
       ]}
     >
       <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-        <Icon source={ICONS[result.type]} size={24} color={theme.colors.primary} />
+        <Icon source={ICONS[result.type]} size={24} color={colors.iconDefault} />
       </View>
       <View style={styles.content}>
         <View style={styles.header}>
@@ -63,7 +63,7 @@ function SearchResultItemComponent({ result, onPress }: SearchResultItemProps) {
         )}
         <Text
           variant="labelSmall"
-          style={[styles.typeLabel, { color: theme.colors.primary }]}
+          style={[styles.typeLabel, { color: colors.iconDefault }]}
         >
           {LABELS[result.type]}
         </Text>

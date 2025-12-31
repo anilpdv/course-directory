@@ -16,6 +16,7 @@ import { useProgress } from '@shared/contexts/ProgressContext';
 import { Video } from '@shared/types';
 import { withCount } from '@shared/utils';
 import { SectionAccordion } from '../components/SectionAccordion';
+import { colors } from '@shared/theme';
 
 export function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -96,14 +97,14 @@ export function CourseDetailScreen() {
                 <Icon
                   source="book-open-variant"
                   size={40}
-                  color={theme.colors.primary}
+                  color={colors.iconDefault}
                 />
               </View>
               {isComplete && (
                 <Chip
                   mode="flat"
                   compact
-                  style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}
+                  style={[styles.completeBadge, { backgroundColor: colors.complete }]}
                   textStyle={[styles.completeText, { color: theme.colors.onPrimary }]}
                 >
                   Complete
@@ -148,14 +149,14 @@ export function CourseDetailScreen() {
                   </Text>
                   <Text
                     variant="titleMedium"
-                    style={{ color: theme.colors.primary, fontWeight: '600' }}
+                    style={{ color: theme.colors.onSurface, fontWeight: '600' }}
                   >
                     {Math.round(progress.percent)}%
                   </Text>
                 </View>
                 <ProgressBar
                   progress={progress.percent / 100}
-                  color={theme.colors.primary}
+                  color={colors.progressFill}
                   style={styles.progressBar}
                 />
                 <Text variant="bodySmall" style={[styles.progressDetail, { color: theme.colors.onSurfaceVariant }]}>

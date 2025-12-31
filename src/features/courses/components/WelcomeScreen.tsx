@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, Icon, useTheme } from 'react-native-paper';
+import { colors } from '@shared/theme';
 
 interface WelcomeScreenProps {
   onAddSingleCourse: () => void;
@@ -22,7 +23,7 @@ export const WelcomeScreen = memo(function WelcomeScreen({
       edges={['bottom']}
     >
       <View style={styles.content}>
-        <Icon source="book-open-page-variant" size={80} color={theme.colors.primary} />
+        <Icon source="book-open-page-variant" size={80} color={colors.iconDefault} />
         <Text
           variant="headlineMedium"
           style={[styles.title, { color: theme.colors.onBackground }]}

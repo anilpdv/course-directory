@@ -4,7 +4,7 @@ import { Text, ProgressBar, Icon, IconButton, useTheme } from 'react-native-pape
 import { Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { formatTime } from '@shared/utils/formatters';
-import { spacing, borderRadius, progressBarHeights } from '@shared/theme';
+import { spacing, borderRadius, progressBarHeights, colors } from '@shared/theme';
 
 interface VideoItemProps {
   video: Video;
@@ -28,11 +28,11 @@ function VideoItemComponent({ video, onPress }: VideoItemProps) {
         <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
           <View style={styles.leftContainer}>
             {isComplete ? (
-              <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
+              <View style={[styles.completeBadge, { backgroundColor: colors.complete }]}>
                 <Icon source="check" size={16} color={theme.colors.onPrimary} />
               </View>
             ) : hasProgress ? (
-              <View style={[styles.statusIndicator, { borderColor: theme.colors.primary }]} />
+              <View style={[styles.statusIndicator, { borderColor: colors.progressFill }]} />
             ) : (
               <View style={[styles.statusIndicator, { borderColor: theme.colors.onSurfaceVariant }]} />
             )}
@@ -51,12 +51,12 @@ function VideoItemComponent({ video, onPress }: VideoItemProps) {
             </Text>
             {hasProgress && !isComplete && (
               <View style={styles.resumeInfo}>
-                <Text variant="labelSmall" style={{ color: theme.colors.primary }}>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   Resume at {formatTime(progress.lastPosition)}
                 </Text>
                 <ProgressBar
                   progress={(progress.percentComplete || 0) / 100}
-                  color={theme.colors.primary}
+                  color={colors.progressFill}
                   style={styles.progressBar}
                 />
               </View>

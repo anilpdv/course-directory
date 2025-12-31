@@ -5,7 +5,7 @@ import { Course } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { useTags } from '@shared/contexts/TagsContext';
 import { TagChip, TagSelector } from '@features/tags';
-import { spacing, borderRadius, shadows } from '@shared/theme';
+import { spacing, borderRadius, shadows, colors } from '@shared/theme';
 import { withCount } from '@shared/utils';
 
 interface CourseCardProps {
@@ -51,7 +51,7 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
               <Icon
                 source={course.icon || 'book-open-variant'}
                 size={32}
-                color={theme.colors.primary}
+                color={colors.iconDefault}
               />
             </View>
             <View style={styles.titleContainer}>
@@ -99,7 +99,7 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
               <Chip
                 mode="flat"
                 compact
-                style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}
+                style={[styles.completeBadge, { backgroundColor: colors.complete }]}
                 textStyle={[styles.completeText, { color: theme.colors.onPrimary }]}
               >
                 Complete
@@ -155,7 +155,7 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
               <View
                 style={[
                   styles.progressFill,
-                  { backgroundColor: theme.colors.primary, width: `${progress.percent}%` },
+                  { backgroundColor: colors.progressFill, width: `${progress.percent}%` },
                 ]}
               />
             </View>

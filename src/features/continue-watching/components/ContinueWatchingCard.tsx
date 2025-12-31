@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, Icon, useTheme, Surface } from 'react-native-paper';
-import { spacing, borderRadius, shadows } from '@shared/theme';
+import { spacing, borderRadius, shadows, colors } from '@shared/theme';
 import { formatTime, formatRelativeTime } from '@shared/utils';
 import { ContinueWatchingItem } from '../hooks/useContinueWatching';
 
@@ -31,7 +31,7 @@ function ContinueWatchingCardComponent({ item, onPress }: ContinueWatchingCardPr
       >
         {/* Video thumbnail placeholder */}
         <View style={[styles.thumbnail, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Icon source="play-circle" size={32} color={theme.colors.primary} />
+          <Icon source="play-circle" size={32} color={colors.iconDefault} />
           <View style={[styles.durationBadge, { backgroundColor: theme.colors.surface }]}>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurface }}>
               {resumeTime}
@@ -62,7 +62,7 @@ function ContinueWatchingCardComponent({ item, onPress }: ContinueWatchingCardPr
               <View
                 style={[
                   styles.progressFill,
-                  { backgroundColor: theme.colors.primary, width: `${progressPercent}%` },
+                  { backgroundColor: colors.progressFill, width: `${progressPercent}%` },
                 ]}
               />
             </View>

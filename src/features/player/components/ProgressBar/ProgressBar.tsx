@@ -74,7 +74,7 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
               styles.fill,
               {
                 width: `${progressPercent}%`,
-                backgroundColor: theme.colors.primary,
+                backgroundColor: colors.progressFill,
               },
             ]}
           />
@@ -84,7 +84,7 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
             styles.thumb,
             {
               left: `${progressPercent}%`,
-              backgroundColor: theme.colors.primary,
+              backgroundColor: colors.progressFill,
             },
           ]}
         />

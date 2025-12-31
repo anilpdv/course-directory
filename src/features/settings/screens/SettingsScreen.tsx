@@ -9,7 +9,7 @@ import { useTags } from '@shared/contexts/TagsContext';
 import { useStatistics } from '@features/statistics';
 import { handleSingleCourseResult, handleMultipleCoursesResult, withCount } from '@shared/utils';
 import { TagList } from '@features/tags';
-import { spacing, borderRadius, shadows } from '@shared/theme';
+import { spacing, borderRadius, shadows, colors } from '@shared/theme';
 
 interface SettingsSectionProps {
   title: string;
@@ -21,7 +21,7 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
 
   return (
     <View style={styles.section}>
-      <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+      <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
         {title}
       </Text>
       <Surface style={[styles.card, { backgroundColor: theme.colors.surface }, shadows.sm]} elevation={0}>
@@ -117,7 +117,7 @@ export function SettingsScreen() {
             description={`${withCount(courses.length, 'course')} in your library`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="book-multiple" size={22} color={theme.colors.primary} />
+                <Icon source="book-multiple" size={22} color={colors.iconDefault} />
               </View>
             )}
             titleStyle={{ color: theme.colors.onSurface, fontWeight: '600', fontSize: 16 }}
@@ -143,7 +143,7 @@ export function SettingsScreen() {
             description={`${withCount(tagCount, 'tag')} created`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="tag-multiple" size={22} color={theme.colors.primary} />
+                <Icon source="tag-multiple" size={22} color={colors.iconDefault} />
               </View>
             )}
             right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
@@ -160,7 +160,7 @@ export function SettingsScreen() {
             description={`${totalWatchMinutes} min watched • ${statisticsState.data.currentStreak} day streak`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="chart-bar" size={22} color={theme.colors.primary} />
+                <Icon source="chart-bar" size={22} color={colors.iconDefault} />
               </View>
             )}
             right={() => <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />}
@@ -177,7 +177,7 @@ export function SettingsScreen() {
             description={`${withCount(progressCount, 'video')} tracked`}
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="chart-line" size={22} color={theme.colors.primary} />
+                <Icon source="chart-line" size={22} color={colors.iconDefault} />
               </View>
             )}
             titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}
@@ -226,7 +226,7 @@ export function SettingsScreen() {
             description="Offline video course player with progress tracking"
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="play-circle" size={22} color={theme.colors.primary} />
+                <Icon source="play-circle" size={22} color={colors.iconDefault} />
               </View>
             )}
             right={() => (
@@ -248,7 +248,7 @@ export function SettingsScreen() {
             description="MP4, MOV, M4V"
             left={() => (
               <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon source="file-video" size={22} color={theme.colors.primary} />
+                <Icon source="file-video" size={22} color={colors.iconDefault} />
               </View>
             )}
             titleStyle={{ color: theme.colors.onSurface, fontWeight: '500' }}

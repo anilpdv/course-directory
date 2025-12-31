@@ -4,7 +4,7 @@ import { Text, Icon, useTheme } from 'react-native-paper';
 import { Section, Video } from '@shared/types';
 import { useProgress } from '@shared/contexts/ProgressContext';
 import { VideoItem } from './VideoItem';
-import { spacing, borderRadius, progressBarHeights, fontWeights } from '@shared/theme';
+import { spacing, borderRadius, progressBarHeights, fontWeights, colors } from '@shared/theme';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -44,7 +44,7 @@ function SectionAccordionComponent({
       >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Icon source="folder-outline" size={24} color={theme.colors.primary} />
+            <Icon source="folder-outline" size={24} color={colors.iconDefault} />
           </View>
           <View style={styles.titleContainer}>
             <Text
@@ -63,7 +63,7 @@ function SectionAccordionComponent({
           </View>
           <View style={styles.rightContainer}>
             {isComplete ? (
-              <View style={[styles.completeBadge, { backgroundColor: theme.colors.primary }]}>
+              <View style={[styles.completeBadge, { backgroundColor: colors.complete }]}>
                 <Icon source="check" size={16} color={theme.colors.onPrimary} />
               </View>
             ) : (
@@ -87,7 +87,7 @@ function SectionAccordionComponent({
           <View
             style={[
               styles.progressFill,
-              { backgroundColor: theme.colors.primary, width: `${progress.percent}%` },
+              { backgroundColor: colors.progressFill, width: `${progress.percent}%` },
             ]}
           />
         </View>

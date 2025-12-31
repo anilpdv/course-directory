@@ -36,6 +36,12 @@ export const colors = {
   overlay: 'rgba(0, 0, 0, 0.5)',
   controlsOverlay: 'rgba(0, 0, 0, 0.4)',
 
+  // Semantic colors for refined minimalist UI
+  iconDefault: '#9E9E9E',     // Muted gray for icons
+  iconMuted: '#757575',       // Darker gray for less emphasis
+  progressFill: '#6B6B6B',    // Neutral fill for non-active progress
+  complete: '#4CAF50',        // Green for completion states
+
   // Player specific
   playerBackground: '#000000',
   controlButton: 'rgba(255, 255, 255, 0.2)',

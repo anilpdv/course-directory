@@ -42,9 +42,9 @@ export function ProgressCircle({
             height: size,
             borderRadius: size / 2,
             borderWidth: strokeWidth,
-            borderColor: progress >= 100 ? colors.success : colors.primary,
+            borderColor: progress >= 100 ? colors.success : colors.progressFill,
             borderLeftColor: 'transparent',
-            borderBottomColor: progress >= 50 ? (progress >= 100 ? colors.success : colors.primary) : 'transparent',
+            borderBottomColor: progress >= 50 ? (progress >= 100 ? colors.success : colors.progressFill) : 'transparent',
             transform: [{ rotate: `${(progress / 100) * 360 - 90}deg` }],
           },
         ]}
@@ -72,7 +72,7 @@ export function SimpleProgressBar({
           styles.barFill,
           {
             width: `${progress}%`,
-            backgroundColor: progress >= 100 ? colors.success : colors.primary,
+            backgroundColor: progress >= 100 ? colors.success : colors.progressFill,
           },
         ]}
       />
