@@ -74,7 +74,7 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
               styles.fill,
               {
                 width: `${progressPercent}%`,
-                backgroundColor: colors.progressFill,
+                backgroundColor: colors.primary,
               },
             ]}
           />
@@ -84,7 +84,7 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
             styles.thumb,
             {
               left: `${progressPercent}%`,
-              backgroundColor: colors.progressFill,
+              backgroundColor: colors.primary,
             },
           ]}
         />
@@ -95,8 +95,7 @@ export function ProgressBar({ progress, onSeek, onSeekStart, onSeekEnd }: Progre
 
 const styles = StyleSheet.create({
   touchArea: {
-    paddingVertical: 12,
-    marginBottom: 4,
+    paddingVertical: 8,
   },
   container: {
     position: 'relative',

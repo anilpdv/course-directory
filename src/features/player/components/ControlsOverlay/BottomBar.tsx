@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { EdgeInsets } from 'react-native-safe-area-context';
-import { ProgressBar, TimeDisplay } from '../ProgressBar';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { EdgeInsets } from "react-native-safe-area-context";
+import { ProgressBar, TimeDisplay } from "../ProgressBar";
 
 interface BottomBarProps {
   currentTime: number;
@@ -26,23 +26,25 @@ export function BottomBar({
 }: BottomBarProps) {
   const paddingLeft = isFullscreen ? insets.left + 24 : 16;
   const paddingRight = isFullscreen ? insets.right + 24 : 16;
-  const timeVariant = isFullscreen ? 'labelMedium' : 'labelSmall';
+  const timeVariant = isFullscreen ? "labelMedium" : "labelSmall";
 
   return (
-    <View style={[styles.container, { paddingLeft, paddingRight }]}>
+    <View
+      style={[
+        { paddingLeft, paddingRight, paddingBottom: isFullscreen ? 18 : 6 },
+      ]}
+    >
+      <TimeDisplay
+        currentTime={currentTime}
+        duration={duration}
+        variant={timeVariant}
+      />
       <ProgressBar
         progress={progress}
         onSeek={onSeek}
         onSeekStart={onSeekStart}
         onSeekEnd={onSeekEnd}
       />
-      <TimeDisplay currentTime={currentTime} duration={duration} variant={timeVariant} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 16,
-  },
-});

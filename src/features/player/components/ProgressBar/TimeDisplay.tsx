@@ -14,10 +14,7 @@ export function TimeDisplay({ currentTime, duration, variant = 'labelMedium' }: 
   return (
     <View style={styles.container}>
       <Text variant={variant} style={styles.text}>
-        {formatTime(currentTime)}
-      </Text>
-      <Text variant={variant} style={styles.text}>
-        {formatTime(duration)}
+        {formatTime(currentTime)} / {formatTime(duration)}
       </Text>
     </View>
   );
@@ -26,7 +23,7 @@ export function TimeDisplay({ currentTime, duration, variant = 'labelMedium' }: 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   text: {
     color: colors.playerText,

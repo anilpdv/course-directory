@@ -97,7 +97,7 @@ export function CourseDetailScreen() {
                 <Icon
                   source="book-open-variant"
                   size={40}
-                  color={colors.iconDefault}
+                  color={theme.colors.primary}
                 />
               </View>
               {isComplete && (
