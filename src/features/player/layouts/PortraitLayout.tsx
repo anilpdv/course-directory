@@ -26,6 +26,7 @@ interface PortraitLayoutProps {
   showNextVideoOverlay: boolean;
   countdown: number;
   nextVideo: Video | null;
+  previousVideo: Video | null;
   // Video list
   sectionVideos: Video[];
   currentVideoId: string;
@@ -45,6 +46,8 @@ interface PortraitLayoutProps {
   onPlayNext: () => void;
   onCancelAutoPlay: () => void;
   onVideoSelect: (video: Video) => void;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
 }
 
 export function PortraitLayout({
@@ -60,6 +63,7 @@ export function PortraitLayout({
   showNextVideoOverlay,
   countdown,
   nextVideo,
+  previousVideo,
   sectionVideos,
   currentVideoId,
   currentVideoIndex,
@@ -77,6 +81,8 @@ export function PortraitLayout({
   onPlayNext,
   onCancelAutoPlay,
   onVideoSelect,
+  onNextVideo,
+  onPreviousVideo,
 }: PortraitLayoutProps) {
   const theme = useTheme();
   const { isTablet } = useDeviceType();
@@ -107,6 +113,7 @@ export function PortraitLayout({
             showNextVideoOverlay={showNextVideoOverlay}
             countdown={countdown}
             nextVideo={nextVideo}
+            previousVideo={previousVideo}
             onClose={onClose}
             onPlayPause={onPlayPause}
             onPlaybackRateChange={onPlaybackRateChange}
@@ -118,6 +125,8 @@ export function PortraitLayout({
             onToggleFullscreen={onToggleFullscreen}
             onPlayNext={onPlayNext}
             onCancelAutoPlay={onCancelAutoPlay}
+            onNextVideo={onNextVideo}
+            onPreviousVideo={onPreviousVideo}
           />
         )}
       </View>

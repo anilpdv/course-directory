@@ -23,6 +23,7 @@ interface FullscreenLayoutProps {
   showNextVideoOverlay: boolean;
   countdown: number;
   nextVideo: Video | null;
+  previousVideo: Video | null;
   // Handlers
   onToggleControls: () => void;
   onPlayPause: () => void;
@@ -36,6 +37,8 @@ interface FullscreenLayoutProps {
   onClose: () => void;
   onPlayNext: () => void;
   onCancelAutoPlay: () => void;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
 }
 
 export function FullscreenLayout({
@@ -51,6 +54,7 @@ export function FullscreenLayout({
   showNextVideoOverlay,
   countdown,
   nextVideo,
+  previousVideo,
   onToggleControls,
   onPlayPause,
   onPlaybackRateChange,
@@ -63,6 +67,8 @@ export function FullscreenLayout({
   onClose,
   onPlayNext,
   onCancelAutoPlay,
+  onNextVideo,
+  onPreviousVideo,
 }: FullscreenLayoutProps) {
   return (
     <View style={styles.container}>
@@ -83,6 +89,7 @@ export function FullscreenLayout({
           showNextVideoOverlay={showNextVideoOverlay}
           countdown={countdown}
           nextVideo={nextVideo}
+          previousVideo={previousVideo}
           onClose={onClose}
           onPlayPause={onPlayPause}
           onPlaybackRateChange={onPlaybackRateChange}
@@ -94,6 +101,8 @@ export function FullscreenLayout({
           onToggleFullscreen={onToggleFullscreen}
           onPlayNext={onPlayNext}
           onCancelAutoPlay={onCancelAutoPlay}
+          onNextVideo={onNextVideo}
+          onPreviousVideo={onPreviousVideo}
         />
       )}
     </View>

@@ -47,11 +47,11 @@ function CourseCardComponent({ course, onPress, onRemove, isTablet, cardWidth, i
       >
         <Card.Content style={styles.content}>
           <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.colors.surfaceVariant, borderColor: colors.border }]}>
               <Icon
                 source={course.icon || 'book-open-variant'}
                 size={32}
-                color={colors.iconDefault}
+                color={colors.primary}
               />
             </View>
             <View style={styles.titleContainer}>
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm + 4,
+    borderWidth: 1,
   },
   titleContainer: {
     flex: 1,

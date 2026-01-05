@@ -86,6 +86,7 @@ export function VideoPlayerScreen() {
     sectionVideos,
     currentVideoIndex,
     nextVideo,
+    previousVideo,
     handleVideoSelect,
     handleClose,
   } = useVideoNavigation({
@@ -132,10 +133,26 @@ export function VideoPlayerScreen() {
     resetHideControlsTimeout();
   }, [currentTime, duration, setCurrentTime, resetHideControlsTimeout]);
 
+  // Next video handler (immediate, no countdown)
+  const handleNextVideo = useCallback(() => {
+    if (nextVideo) {
+      handleVideoSelect(nextVideo);
+    }
+  }, [nextVideo, handleVideoSelect]);
+
+  // Previous video handler
+  const handlePreviousVideo = useCallback(() => {
+    if (previousVideo) {
+      handleVideoSelect(previousVideo);
+    }
+  }, [previousVideo, handleVideoSelect]);
+
   // Wrap handlers to reset controls timeout
   const wrappedPlayPause = useCallbackWithReset(handlePlayPause, resetHideControlsTimeout, []);
   const wrappedPlaybackRateChange = useCallbackWithReset(handlePlaybackRateChange, resetHideControlsTimeout, []);
   const wrappedToggleFullscreen = useCallbackWithReset(toggleFullscreen, resetHideControlsTimeout, []);
+  const wrappedNextVideo = useCallbackWithReset(handleNextVideo, resetHideControlsTimeout, []);
+  const wrappedPreviousVideo = useCallbackWithReset(handlePreviousVideo, resetHideControlsTimeout, []);
 
   // Common props for both layouts
   const commonProps = {
@@ -151,6 +168,7 @@ export function VideoPlayerScreen() {
     showNextVideoOverlay,
     countdown,
     nextVideo,
+    previousVideo,
     onToggleControls: resetHideControlsTimeout,
     onPlayPause: wrappedPlayPause,
     onPlaybackRateChange: wrappedPlaybackRateChange,
@@ -163,6 +181,8 @@ export function VideoPlayerScreen() {
     onClose: handleClose,
     onPlayNext: playNextVideo,
     onCancelAutoPlay: cancelAutoPlay,
+    onNextVideo: wrappedNextVideo,
+    onPreviousVideo: wrappedPreviousVideo,
   };
 
   if (isFullscreen) {

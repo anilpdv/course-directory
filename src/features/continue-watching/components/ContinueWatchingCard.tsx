@@ -31,7 +31,9 @@ function ContinueWatchingCardComponent({ item, onPress }: ContinueWatchingCardPr
       >
         {/* Video thumbnail placeholder */}
         <View style={[styles.thumbnail, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Icon source="play-circle" size={32} color={colors.iconDefault} />
+          <View style={styles.playIconContainer}>
+            <Icon source="play-circle" size={48} color={colors.primary} />
+          </View>
           <View style={[styles.durationBadge, { backgroundColor: theme.colors.surface }]}>
             <Text variant="labelSmall" style={{ color: theme.colors.onSurface }}>
               {resumeTime}
@@ -91,6 +93,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+  },
+  playIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(187, 134, 252, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   durationBadge: {
     position: 'absolute',

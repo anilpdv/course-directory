@@ -21,6 +21,7 @@ interface ControlsOverlayViewProps {
   showNextVideoOverlay: boolean;
   countdown: number;
   nextVideo: Video | null;
+  previousVideo: Video | null;
   // Handlers
   onClose: () => void;
   onPlayPause: () => void;
@@ -33,6 +34,8 @@ interface ControlsOverlayViewProps {
   onToggleFullscreen: () => void;
   onPlayNext: () => void;
   onCancelAutoPlay: () => void;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
 }
 
 export const ControlsOverlayView = memo(function ControlsOverlayView({
@@ -47,6 +50,7 @@ export const ControlsOverlayView = memo(function ControlsOverlayView({
   showNextVideoOverlay,
   countdown,
   nextVideo,
+  previousVideo,
   onClose,
   onPlayPause,
   onPlaybackRateChange,
@@ -58,6 +62,8 @@ export const ControlsOverlayView = memo(function ControlsOverlayView({
   onToggleFullscreen,
   onPlayNext,
   onCancelAutoPlay,
+  onNextVideo,
+  onPreviousVideo,
 }: ControlsOverlayViewProps) {
   return (
     <>
@@ -77,6 +83,10 @@ export const ControlsOverlayView = memo(function ControlsOverlayView({
           onPlayPause={onPlayPause}
           onSeekBackward={onSeekBackward}
           onSeekForward={onSeekForward}
+          onPreviousVideo={onPreviousVideo}
+          hasPreviousVideo={!!previousVideo}
+          onNextVideo={onNextVideo}
+          hasNextVideo={!!nextVideo}
           size={isFullscreen ? 'large' : 'normal'}
         />
 

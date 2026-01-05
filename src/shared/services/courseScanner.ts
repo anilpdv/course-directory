@@ -161,22 +161,30 @@ async function scanCourseDirectory(
     }
   }
 
-  // If no sections found, check for videos directly in course folder
-  if (sections.length === 0) {
-    const flatCourseId = utils.generateId(courseDir.uri);
-    const flatSectionId = utils.generateId(`${courseDir.uri}/main`);
-    const directVideos = await scanVideosInFolder(courseDir, flatSectionId, flatCourseId, utils);
-    if (directVideos.length > 0) {
-      sections.push({
-        id: flatSectionId,
-        name: 'Videos',
-        folderPath: courseDir.uri,
-        order: 0,
-        courseId: flatCourseId,
-        videos: directVideos,
-      });
-      totalVideos = directVideos.length;
+  // ALWAYS check for videos directly in course folder (not just when no sections exist)
+  const flatCourseId = utils.generateId(courseDir.uri);
+  const flatSectionId = utils.generateId(`${courseDir.uri}/main`);
+  const directVideos = await scanVideosInFolder(courseDir, flatSectionId, flatCourseId, utils);
+
+  if (directVideos.length > 0) {
+    // Determine section name based on whether other sections exist
+    const sectionName = sections.length > 0 ? 'Course Videos' : 'Videos';
+
+    const rootSection: Section = {
+      id: flatSectionId,
+      name: sectionName,
+      folderPath: courseDir.uri,
+      order: 0,
+      courseId: flatCourseId,
+      videos: directVideos,
+    };
+
+    // Add root videos as first section, shift other section orders
+    if (sections.length > 0) {
+      sections.forEach(s => s.order++);
     }
+    sections.unshift(rootSection);
+    totalVideos += directVideos.length;
   }
 
   return {

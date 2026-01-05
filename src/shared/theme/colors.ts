@@ -37,9 +37,9 @@ export const colors = {
   controlsOverlay: 'rgba(0, 0, 0, 0.4)',
 
   // Semantic colors for refined minimalist UI
-  iconDefault: '#9E9E9E',     // Muted gray for icons
-  iconMuted: '#757575',       // Darker gray for less emphasis
-  progressFill: '#6B6B6B',    // Neutral fill for non-active progress
+  iconDefault: '#B8B8B8',     // Brighter gray for better icon visibility
+  iconMuted: '#8A8A8A',       // Lighter muted for secondary icons
+  progressFill: '#BB86FC',    // Primary purple for progress bars
   complete: '#4CAF50',        // Green for completion states
 
   // Player specific
