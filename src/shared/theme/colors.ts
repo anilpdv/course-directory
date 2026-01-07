@@ -4,18 +4,18 @@ export const colors = {
   surface: '#1E1E1E',
   surfaceVariant: '#2D2D2D',
 
-  // Primary colors
-  primary: '#BB86FC',
-  primaryVariant: '#3700B3',
-  primaryContainer: '#4A148C',
-  onPrimary: '#000000',
+  // Primary colors (Deep Navy)
+  primary: '#4A6F8A',
+  primaryVariant: '#172b3b',
+  primaryContainer: '#172b3b',
+  onPrimary: '#FFFFFF',
   onPrimaryContainer: '#FFFFFF',
 
-  // Secondary/Accent colors
-  secondary: '#03DAC6',
-  secondaryVariant: '#018786',
-  secondaryContainer: '#004D40',
-  onSecondary: '#000000',
+  // Secondary/Accent colors (Dark Teal)
+  secondary: '#3D6B6B',
+  secondaryVariant: '#1D4044',
+  secondaryContainer: '#1D4044',
+  onSecondary: '#FFFFFF',
   onSecondaryContainer: '#FFFFFF',
 
   // Text colors
@@ -24,11 +24,11 @@ export const colors = {
   onSurfaceVariant: '#B3B3B3',
   textDisabled: '#666666',
 
-  // Status colors
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#CF6679',
-  onError: '#000000',
+  // Status colors (Dark & Muted)
+  success: '#4A8B7A',
+  warning: '#8B7355',
+  error: '#8B5A5A',
+  onError: '#FFFFFF',
 
   // Other
   border: '#3D3D3D',
@@ -37,10 +37,10 @@ export const colors = {
   controlsOverlay: 'rgba(0, 0, 0, 0.4)',
 
   // Semantic colors for refined minimalist UI
-  iconDefault: '#B8B8B8',     // Brighter gray for better icon visibility
-  iconMuted: '#8A8A8A',       // Lighter muted for secondary icons
-  progressFill: '#BB86FC',    // Primary purple for progress bars
-  complete: '#4CAF50',        // Green for completion states
+  iconDefault: '#7A8B95',     // Blue-gray tint icons
+  iconMuted: '#5A6A72',       // Darker muted icons
+  progressFill: '#4A6F8A',    // Slate blue for progress bars
+  complete: '#4A8B7A',        // Dark sage for completion states
 
   // Player specific
   playerBackground: '#000000',
@@ -53,18 +53,18 @@ export const colors = {
 
 export type ThemeColors = typeof colors;
 
-// Tag color palette for user-created tags
+// Tag color palette for user-created tags (dark tones)
 export const tagColors = [
-  '#BB86FC', // Purple (primary)
-  '#03DAC6', // Teal (secondary)
-  '#CF6679', // Pink/Error
-  '#4CAF50', // Green
-  '#FF9800', // Orange
-  '#2196F3', // Blue
-  '#9C27B0', // Deep Purple
-  '#00BCD4', // Cyan
-  '#FFEB3B', // Yellow
-  '#E91E63', // Pink
+  '#4A6F8A', // Slate blue (primary)
+  '#3D6B6B', // Teal (secondary)
+  '#4A8B7A', // Sage green
+  '#8B5A5A', // Muted rose
+  '#6A5A8B', // Muted purple
+  '#4A7A8B', // Steel teal
+  '#8B6A4A', // Bronze
+  '#5A7A6A', // Forest
+  '#7A6A5A', // Taupe
+  '#5A6A7A', // Steel blue
 ] as const;
 
 export type TagColor = (typeof tagColors)[number];

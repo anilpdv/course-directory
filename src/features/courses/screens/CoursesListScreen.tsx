@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert, TextInput, Pressable } from 'react-native';
 import { useDeviceType } from '@shared/hooks';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,6 @@ import { WelcomeScreen } from '../components/WelcomeScreen';
 import { TagFilterDrawer, useTagFilter } from '@features/tags';
 import { ContinueWatchingSection } from '@features/continue-watching';
 import { useSearch, useRecentSearches, SearchResults, SearchResult } from '@features/search';
-import { Searchbar } from 'react-native-paper';
 import { spacing, borderRadius, colors } from '@shared/theme';
 
 export function CoursesListScreen() {
@@ -235,15 +234,21 @@ export function CoursesListScreen() {
         <>
           {/* Search bar always visible - never remounts */}
           <View style={styles.searchContainer}>
-            <Searchbar
-              placeholder="Search courses, sections, videos..."
-              onChangeText={setQuery}
-              value={query}
-              style={[styles.searchBar, { backgroundColor: theme.colors.surfaceVariant }]}
-              inputStyle={{ color: theme.colors.onSurface }}
-              iconColor={theme.colors.onSurfaceVariant}
-              placeholderTextColor={theme.colors.onSurfaceVariant}
-            />
+            <View style={[styles.searchInputContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
+              <Icon source="magnify" size={22} color={theme.colors.onSurfaceVariant} />
+              <TextInput
+                placeholder="Search courses, sections, videos..."
+                value={query}
+                onChangeText={setQuery}
+                style={[styles.searchInput, { color: theme.colors.onSurface }]}
+                placeholderTextColor={theme.colors.onSurfaceVariant}
+              />
+              {query.length > 0 && (
+                <Pressable onPress={() => setQuery('')} hitSlop={8}>
+                  <Icon source="close-circle" size={20} color={theme.colors.onSurfaceVariant} />
+                </Pressable>
+              )}
+            </View>
           </View>
 
           {/* Conditionally show search results or course list */}
@@ -370,12 +375,18 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  searchBar: {
-    elevation: 0,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 52,
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    gap: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 0,
   },
   header: {
     flexDirection: 'row',
