@@ -6,6 +6,7 @@ import { EdgeInsets } from 'react-native-safe-area-context';
 import { Video, VideoProgress } from '@shared/types';
 import { VideoContainer } from '../components/VideoContainer';
 import { ControlsOverlayView } from '../components/ControlsOverlayView';
+import { LoadingOverlay } from '../components/LoadingOverlay';
 import { VideoPlaylist } from '../components/VideoPlaylist';
 import { colors, aspectRatios } from '@shared/theme';
 import { useDeviceType } from '@shared/hooks/useDeviceType';
@@ -16,6 +17,7 @@ interface PortraitLayoutProps {
   insets: EdgeInsets;
   // Playback state
   isPlaying: boolean;
+  isLoading: boolean;
   playbackRate: number;
   currentTime: number;
   duration: number;
@@ -55,6 +57,7 @@ export function PortraitLayout({
   videoName,
   insets,
   isPlaying,
+  isLoading,
   playbackRate,
   currentTime,
   duration,
@@ -99,6 +102,8 @@ export function PortraitLayout({
           { marginTop: insets.top },
         ]}>
         <VideoContainer player={player} isFullscreen={false} onPress={onToggleControls} />
+
+        {isLoading && <LoadingOverlay />}
 
         {isControlsVisible && (
           <ControlsOverlayView

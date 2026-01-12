@@ -10,7 +10,7 @@ interface SeekButtonsProps {
 }
 
 export function SeekButtons({ onSeekBackward, onSeekForward, size = 'large' }: SeekButtonsProps) {
-  const iconSize = size === 'large' ? iconSizes.xl : 28;
+  const iconSize = size === 'large' ? iconSizes.xl : 24;
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (
@@ -42,7 +42,7 @@ export function SeekBackwardButton({
   onPress: () => void;
   size?: 'normal' | 'large';
 }) {
-  const iconSize = size === 'large' ? iconSizes.xl : 28;
+  const iconSize = size === 'large' ? iconSizes.xl : 24;
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (
@@ -64,7 +64,7 @@ export function SeekForwardButton({
   onPress: () => void;
   size?: 'normal' | 'large';
 }) {
-  const iconSize = size === 'large' ? iconSizes.xl : 28;
+  const iconSize = size === 'large' ? iconSizes.xl : 24;
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (

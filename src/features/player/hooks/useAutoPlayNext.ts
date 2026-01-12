@@ -12,6 +12,7 @@ interface UseAutoPlayNextOptions {
   nextVideo: Video | null;
   duration: number;
   updateVideoProgress: (videoId: string, position: number, duration: number) => void;
+  isFullscreen: boolean;
 }
 
 export function useAutoPlayNext({
@@ -22,6 +23,7 @@ export function useAutoPlayNext({
   nextVideo,
   duration,
   updateVideoProgress,
+  isFullscreen,
 }: UseAutoPlayNextOptions) {
   const router = useRouter();
   const [showNextVideoOverlay, setShowNextVideoOverlay] = useState(false);
@@ -89,9 +91,10 @@ export function useAutoPlayNext({
         videoName: nextVideo.name,
         courseId,
         sectionId,
+        isFullscreen: String(isFullscreen),
       },
     });
-  }, [nextVideo, duration, updateVideoProgress, videoId, courseId, sectionId, router]);
+  }, [nextVideo, duration, updateVideoProgress, videoId, courseId, sectionId, router, isFullscreen]);
 
   const cancelAutoPlay = useCallback(() => {
     setShowNextVideoOverlay(false);

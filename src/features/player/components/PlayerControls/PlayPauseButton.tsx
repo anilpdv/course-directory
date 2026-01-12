@@ -11,7 +11,7 @@ interface PlayPauseButtonProps {
 
 export function PlayPauseButton({ isPlaying, onPress, size = 'large' }: PlayPauseButtonProps) {
   const theme = useTheme();
-  const iconSize = size === 'large' ? iconSizes.xxl : 40;
+  const iconSize = size === 'large' ? iconSizes.xxl : 32;
   const buttonStyle = size === 'large' ? styles.largeButton : styles.normalButton;
 
   return (

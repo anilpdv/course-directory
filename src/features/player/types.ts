@@ -6,6 +6,7 @@ export interface VideoPlayerParams {
   videoName: string;
   courseId: string;
   sectionId: string;
+  isFullscreen?: string; // "true" or "false" (route params are strings)
 }
 
 export interface PlaybackState {

@@ -10,6 +10,7 @@ interface UseVideoNavigationOptions {
   currentTime: number;
   duration: number;
   updateVideoProgress: (videoId: string, position: number, duration: number) => void;
+  isFullscreen: boolean;
 }
 
 export function useVideoNavigation({
@@ -19,6 +20,7 @@ export function useVideoNavigation({
   currentTime,
   duration,
   updateVideoProgress,
+  isFullscreen,
 }: UseVideoNavigationOptions) {
   const router = useRouter();
   const { getCourse } = useCourses();
@@ -65,10 +67,11 @@ export function useVideoNavigation({
           videoName: video.name,
           courseId,
           sectionId,
+          isFullscreen: String(isFullscreen),
         },
       });
     },
-    [videoId, duration, currentTime, updateVideoProgress, router, courseId, sectionId]
+    [videoId, duration, currentTime, updateVideoProgress, router, courseId, sectionId, isFullscreen]
   );
 
   const handleClose = useCallback(() => {

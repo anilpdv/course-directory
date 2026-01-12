@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { IconButton, Text } from "react-native-paper";
-import { EdgeInsets } from "react-native-safe-area-context";
+import { EdgeInsets, SafeAreaView } from "react-native-safe-area-context";
 import { PlaybackRateChip, FullscreenButton } from "../PlayerControls";
 import { colors, iconSizes, fontWeights } from "@shared/theme";
 
@@ -27,7 +27,7 @@ export function TopBar({
   const paddingLeft = isFullscreen ? insets.left + 16 : 8;
   const paddingRight = isFullscreen ? insets.right + 16 : 8;
 
-  return (
+  const content = (
     <View style={[styles.container, { paddingLeft, paddingRight }]}>
       <IconButton
         icon="close"
@@ -50,6 +50,14 @@ export function TopBar({
       </View>
     </View>
   );
+
+  // Only apply SafeAreaView in fullscreen mode
+  // Portrait mode already has safe area handled by video container's marginTop
+  if (isFullscreen) {
+    return <SafeAreaView edges={['top']}>{content}</SafeAreaView>;
+  }
+
+  return content;
 }
 
 const styles = StyleSheet.create({

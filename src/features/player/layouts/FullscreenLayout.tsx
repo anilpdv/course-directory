@@ -5,6 +5,7 @@ import { EdgeInsets } from 'react-native-safe-area-context';
 import { Video } from '@shared/types';
 import { VideoContainer } from '../components/VideoContainer';
 import { ControlsOverlayView } from '../components/ControlsOverlayView';
+import { LoadingOverlay } from '../components/LoadingOverlay';
 import { colors } from '@shared/theme/colors';
 
 interface FullscreenLayoutProps {
@@ -13,6 +14,7 @@ interface FullscreenLayoutProps {
   insets: EdgeInsets;
   // Playback state
   isPlaying: boolean;
+  isLoading: boolean;
   playbackRate: number;
   currentTime: number;
   duration: number;
@@ -46,6 +48,7 @@ export function FullscreenLayout({
   videoName,
   insets,
   isPlaying,
+  isLoading,
   playbackRate,
   currentTime,
   duration,
@@ -75,6 +78,8 @@ export function FullscreenLayout({
       <StatusBar hidden />
 
       <VideoContainer player={player} isFullscreen onPress={onToggleControls} />
+
+      {isLoading && <LoadingOverlay />}
 
       {isControlsVisible && (
         <ControlsOverlayView

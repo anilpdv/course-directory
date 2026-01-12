@@ -3,22 +3,36 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 
 interface UseOrientationModeOptions {
   onResetControls?: () => void;
+  initialFullscreen?: boolean;
 }
 
-export function useOrientationMode({ onResetControls }: UseOrientationModeOptions = {}) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+export function useOrientationMode({ onResetControls, initialFullscreen = false }: UseOrientationModeOptions = {}) {
+  const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
 
-  // Start in portrait mode, unlock orientation
+  // Setup orientation on mount based on initialFullscreen state
   useEffect(() => {
     const setup = async () => {
-      await ScreenOrientation.unlockAsync();
+      if (initialFullscreen) {
+        // Restore fullscreen mode - lock to landscape
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } else {
+        // Normal mode - unlock orientation and check current state
+        await ScreenOrientation.unlockAsync();
+        const orientation = await ScreenOrientation.getOrientationAsync();
+        if (
+          orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+          orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+        ) {
+          setIsFullscreen(true);
+        }
+      }
     };
     setup();
 
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     };
-  }, []);
+  }, [initialFullscreen]);
 
   // Listen to device orientation changes
   useEffect(() => {

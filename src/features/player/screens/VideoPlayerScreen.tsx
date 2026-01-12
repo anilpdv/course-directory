@@ -34,8 +34,11 @@ export function VideoPlayerScreen() {
   const existingProgress = getVideoProgress(params.videoId);
   const initialPosition = existingProgress?.isComplete ? 0 : (existingProgress?.lastPosition || 0);
 
+  // Parse fullscreen state from navigation params
+  const initialFullscreen = params.isFullscreen === 'true';
+
   // Initialize player
-  const player = usePlayerInit({
+  const { player, isLoading } = usePlayerInit({
     videoPath: params.videoPath,
     initialPosition,
     playbackRateIndex: 2, // Default to 1.0x
@@ -79,6 +82,7 @@ export function VideoPlayerScreen() {
   // Orientation mode (fullscreen toggle)
   const { isFullscreen, toggleFullscreen } = useOrientationMode({
     onResetControls: resetHideControlsTimeout,
+    initialFullscreen,
   });
 
   // Video navigation (section videos, select video, close)
@@ -96,6 +100,7 @@ export function VideoPlayerScreen() {
     currentTime,
     duration,
     updateVideoProgress,
+    isFullscreen,
   });
 
   // Auto-play next video
@@ -112,6 +117,7 @@ export function VideoPlayerScreen() {
     nextVideo,
     duration,
     updateVideoProgress,
+    isFullscreen,
   });
 
   // Seek handlers
@@ -160,6 +166,7 @@ export function VideoPlayerScreen() {
     videoName: params.videoName,
     insets,
     isPlaying,
+    isLoading,
     playbackRate: currentRate,
     currentTime,
     duration,

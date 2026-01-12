@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useVideoPlayer as useExpoVideoPlayer } from 'expo-video';
 import { PLAYBACK_RATES } from '../constants';
 
@@ -12,6 +13,8 @@ export function usePlayerInit({
   initialPosition,
   playbackRateIndex,
 }: UsePlayerInitOptions) {
+  const [isLoading, setIsLoading] = useState(true);
+
   const player = useExpoVideoPlayer(videoPath, (player) => {
     player.loop = false;
     player.playbackRate = PLAYBACK_RATES[playbackRateIndex];
@@ -28,5 +31,18 @@ export function usePlayerInit({
     player.play();
   });
 
-  return player;
+  // Track loading state - hide overlay when video starts playing
+  useEffect(() => {
+    const subscription = player.addListener('playingChange', (event) => {
+      if (event.isPlaying) {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
+
+  return { player, isLoading };
 }
